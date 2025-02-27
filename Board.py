@@ -14,12 +14,12 @@ class Board:
     def gen_board(self):
         while (self.red_pos in self.snake_pos):
             self.red_pos = self.random_apple_pos()
-        while (self.green1_pos in self.snake_pos or self.red_pos is self.green1_pos):
+        while (self.green1_pos in self.snake_pos or self.red_pos == self.green1_pos):
             self.green1_pos = self.random_apple_pos()
-        while (self.green2_pos in self.snake_pos or self.green2_pos is self.green1_pos or self.red_pos is self.green2_pos):
+        while (self.green2_pos in self.snake_pos or self.green2_pos == self.green1_pos or self.red_pos == self.green2_pos):
             self.green2_pos = self.random_apple_pos()
         
-        self.board[self.snake_pos[0]] = 1
+        self.board[self.snake_pos[0]] = 5
         self.board[self.snake_pos[1]] = 1
         self.board[self.snake_pos[2]] = 1
         self.board[self.red_pos] = 2
@@ -100,10 +100,10 @@ class Board:
         return True
     
     def update_board(self):
-        """call after all the elements have been correctly"""
         self.board[1:11, 1:11] = 0
         for i in range(len(self.snake_pos)):
             self.board[self.snake_pos[i]] = 1
+        self.board[self.snake_pos[0]] = 5
         self.board[self.red_pos] = 2
         self.board[self.green1_pos] = 3
         self.board[self.green2_pos] = 3
@@ -114,7 +114,35 @@ class Board:
         update snake size
         """
         snake_head = self.snake_pos[0]
-        if snake_head is self.green1_pos or snake_head is self.green2_pos:
-            print("green")
-        elif snake_head is self.red_pos:
-            print("red")
+        if snake_head == self.green1_pos:
+            self.augment_snake()
+            self.respawn_green1()
+        elif snake_head == self.green2_pos:
+            self.augment_snake()
+            self.respawn_green2()
+        elif snake_head == self.red_pos:
+            self.reduce_snake()
+            self.respawn_red()
+
+    def respawn_green1(self):
+        while (self.green1_pos in self.snake_pos or self.green1_pos == self.green2_pos or self.green1_pos == self.red_pos):
+            self.green1_pos = self.random_apple_pos()
+    
+    def respawn_green2(self):
+        while (self.green2_pos in self.snake_pos or self.green2_pos == self.green1_pos or self.red_pos == self.green2_pos):
+            self.green2_pos = self.random_apple_pos()
+    
+    def respawn_red(self):
+        while (self.red_pos in self.snake_pos or self.red_pos == self.green1_pos or self.red_pos == self.green2_pos):
+            self.red_pos = self.random_apple_pos()
+
+    def reduce_snake(self):
+        self.snake_pos.pop()
+        if len(self.snake_pos) == 0:
+            exit(0)
+    
+    def augment_snake(self):
+        tail = self.snake_pos[-1]
+        self.snake_pos.append(tail)
+        print("green")
+        

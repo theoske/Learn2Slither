@@ -18,27 +18,26 @@ class Game:
         self.grass_sprite = pygame.image.load("sprites/grass.png").convert()
         self.wall_sprite = pygame.image.load("sprites/wall.png").convert()
         self.snake_sprite = pygame.image.load("sprites/snake.png").convert()
+        self.head_sprite = pygame.image.load("sprites/head.png").convert()
         self.red_sprite =  pygame.image.load("sprites/red.png").convert()
         self.green_sprite = pygame.image.load("sprites/green.png").convert()
         running = True
-        clock = pygame.time.Clock()
         while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-            
-            keys = pygame.key.get_pressed()
-            if keys[pygame.K_UP]:
-                self.board.snake_move_north()
-            if keys[pygame.K_DOWN]:
-                self.board.snake_move_south()
-            if keys[pygame.K_LEFT]:
-                self.board.snake_move_west()
-            if keys[pygame.K_RIGHT]:
-                self.board.snake_move_east()
+            event = pygame.event.wait()
+            if event.type == pygame.QUIT:
+                running = False
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    self.board.snake_move_north()
+                elif event.key == pygame.K_DOWN:
+                    self.board.snake_move_south()
+                elif event.key == pygame.K_LEFT:
+                    self.board.snake_move_west()
+                elif event.key == pygame.K_RIGHT:
+                    self.board.snake_move_east()
+            self.board.is_eating_apple()
             self.board.update_board()
             self.display_board()
-            clock.tick(10)
 
         pygame.quit()
 
@@ -57,6 +56,8 @@ class Game:
                     sprite = self.green_sprite
                 elif (value == 4):
                     sprite = self.wall_sprite
+                elif (value == 5):
+                    sprite = self.head_sprite
                 if sprite:
                     pos_x = x * TILE_SIZE
                     pos_y = y * TILE_SIZE
