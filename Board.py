@@ -4,6 +4,7 @@ from random import randint
 
 class Board:
     def __init__(self):
+        self.death = False
         self.board = np.zeros((12, 12), dtype=int)
         self.snake_pos = self.random_snake_pos()
         self.red_pos = self.random_apple_pos()
@@ -46,7 +47,8 @@ class Board:
 
     def snake_move_east(self):
         if self.is_move_legal("east") is False:
-            exit(0)
+            self.death = True
+            return
         
         for i in range(len(self.snake_pos) - 1, -1, -1):
             if i != 0:
@@ -56,7 +58,8 @@ class Board:
 
     def snake_move_west(self):
         if self.is_move_legal("west") is False:
-            exit(0)
+            self.death = True
+            return
         for i in range(len(self.snake_pos) - 1, -1, -1):
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
@@ -65,7 +68,8 @@ class Board:
     
     def snake_move_north(self):
         if self.is_move_legal("north") is False:
-            exit(0)
+            self.death = True
+            return
         for i in range(len(self.snake_pos) - 1, -1, -1):
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
@@ -74,7 +78,8 @@ class Board:
 
     def snake_move_south(self):
         if self.is_move_legal("south") is False:
-            exit(0)
+            self.death = True
+            return
         for i in range(len(self.snake_pos) - 1, -1, -1):
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
@@ -139,10 +144,10 @@ class Board:
     def reduce_snake(self):
         self.snake_pos.pop()
         if len(self.snake_pos) == 0:
-            exit(0)
+            self.death = True
+            return
     
     def augment_snake(self):
         tail = self.snake_pos[-1]
         self.snake_pos.append(tail)
-        print("green")
         
