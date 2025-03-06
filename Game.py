@@ -5,6 +5,9 @@ import cv2
 TILE_SIZE = 50
 
 class Game:
+    """
+        This class is used to play the snake game.
+    """
     def __init__(self):
         self.board = Board()
         pygame.init()

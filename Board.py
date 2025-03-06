@@ -3,6 +3,9 @@ from random import randint
 
 
 class Board:
+    """
+        This class is the backend of the snake game.
+    """
     def __init__(self):
         self.death = False
         self.board = np.zeros((12, 12), dtype=int)
@@ -150,4 +153,14 @@ class Board:
     def augment_snake(self):
         tail = self.snake_pos[-1]
         self.snake_pos.append(tail)
+    
+    def get_agent_vision(self):
+        """
+            The agent only sees the column and the row of the snakes head.
+            So this function returns a board with all the unseen tiles set as -1.
+            return (row, column)
+        """
+        head_pos = self.snake_pos[0]
+        return (self.board[head_pos[0], :], self.board[:, head_pos[1]])
+
         
