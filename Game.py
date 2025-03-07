@@ -54,6 +54,8 @@ class Game:
                 self.death_screen()
             self.board.update_board()
             self.display_board()
+            #print(self.board.board)
+            self.vision_to_state(self.board.get_agent_vision())
 
     def display_board(self):
         self.screen.fill((0, 0, 0))
@@ -118,6 +120,47 @@ class Game:
         camera_surface = pygame.surfarray.make_surface(frame)
         return camera_surface
 
+
+    def vision_to_state(self, v):
+            """
+                Takes the visible board and returns the closest tile or the closest green apple
+                if there is no obstacle between the snake's head and the apple.
+            """
+            visible_row, visible_column = v
+            has_reached_snake = False
+            first_object_west = 0
+            first_object_east = 0
+
+            head_x = 0
+            head_y = 0
+
+            """
+                Pour chaque direction, verifie si pommeVerte.
+                Obstacles potentiels: pomme rouge, queue.
+                Pomme rouge se verifie en comparant les coordonnées avec la pomme verte.
+                Queue se vérifie en regardant d'abord si présente dans la direction.
+                Si oui enregistrer coordonnées, comparer avec coordonnées pomme verte.
+
+                Si obstacle présent ou si pas de pomme verte, donner case la plus proche.
+            """
+            obstacle = False
+            if self.board.green1_pos[0] == self.board.snake_pos[0][0] :# si pomme verte1 sur même ligne voir si Pomme est la plus proche
+                if self.board.green1_pos[1] < self.board.snake_pos[0][1]:# pomme verte west.
+                    if self.board.green1_pos[0] != self.board.red_pos[0] or self.board.green1_pos[1] > self.board.red_pos[1] or self.board.red_pos[1] > self.board.snake_pos[0][1]:# rouge pas entre verte et tete
+                        for i in range(len(self.board.snake_pos)):
+                            if i > 0:#snake body between green and head
+                                if self.board.snake_pos[i][0] == self.board.snake_pos[0][0] and self.board.green1_pos[1] < self.board.snake_pos[i][1] and self.board.snake_pos[0][1] > self.board.snake_pos[i][1]:
+                                    obstacle = True
+                    else:
+                        obstacle = True
+                    if obstacle:
+                        first_object_west = self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+                    else:
+                        first_object_west = self.board.board[self.board.green1_pos]
+            #faire pareil pour green2
+
+            
+            print (first_object_west, first_object_east, first_object_north, first_object_south)
 
     
 g = Game()

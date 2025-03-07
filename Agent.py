@@ -17,6 +17,10 @@ class Agent:
         self.board = Board()
 
     def vision_to_state(self):
+        """
+            Takes the visible board and returns the closest tile or the closest green apple
+            if there is no obstacle between the snake's head and the apple.
+        """
         visible_row, visible_column = self.board.get_agent_vision()
         has_reached_snake = False
         first_object_west = 0
