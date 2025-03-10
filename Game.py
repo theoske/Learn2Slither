@@ -55,7 +55,7 @@ class Game:
             self.board.update_board()
             self.display_board()
             #print(self.board.board)
-            self.vision_to_state(self.board.get_agent_vision())
+            self.vision_to_state()
 
     def display_board(self):
         self.screen.fill((0, 0, 0))
@@ -121,13 +121,11 @@ class Game:
         return camera_surface
 
 
-    def vision_to_state(self, v):
+    def vision_to_state(self):
             """
                 Takes the visible board and returns the closest tile or the closest green apple
                 if there is no obstacle between the snake's head and the apple.
             """
-            visible_row, visible_column = v
-            has_reached_snake = False
             first_object_west = 0
             first_object_east = 0
 
@@ -146,6 +144,10 @@ class Game:
             if self.board.green1_pos[0] == self.board.snake_pos[0][0]:
                 first_object_west = self.green1_west()
                 first_object_east = self.green1_east()
+            elif self.board.green1_pos[1] == self.board.snake_pos[0][1]:
+                first_object_north = self.green1_north()
+                first_object_south = self.green1_south()
+            
             if self.board.green2_pos[0] == self.board.snake_pos[0][0] and (self.board.green1_pos[0] != self.board.snake_pos[0][0] or (self.board.green2_pos[1] > self.board.green1_pos[1] and self.board.green2_pos[1] < self.board.snake_pos[0][1])):
                 first_object_west = self.green2_west()
             elif self.board.green2_pos[0] == self.board.snake_pos[0][0] and (self.board.green1_pos[0] != self.board.snake_pos[0][0] or (self.board.green2_pos[1] < self.board.green1_pos[1] and self.board.green2_pos[1] > self.board.snake_pos[0][1])):
@@ -201,7 +203,7 @@ class Game:
             else:
                 obstacle = True
             if obstacle:
-                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
             else:
                 return self.board.board[self.board.green1_pos]
         return 0
@@ -217,7 +219,71 @@ class Game:
             else:
                 obstacle = True
             if obstacle:
-                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
+            else:
+                return self.board.board[self.board.green2_pos]
+        return 0
+    
+    def green1_north(self):#a verifier
+        obstacle = False
+        if self.board.green1_pos[0] < self.board.snake_pos[0][0]:
+            if self.board.green1_pos[1] != self.board.red_pos[1] or self.board.green1_pos[0] > self.board.red_pos[0] or self.board.red_pos[0] > self.board.snake_pos[0][0]:
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green1_pos[0] < self.board.snake_pos[i][0] and self.board.snake_pos[0][0] > self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green1_pos]
+        return 0
+    
+    def green2_north(self):#a verifier
+        obstacle = False
+        if self.board.green2_pos[0] < self.board.snake_pos[0][0]:
+            if self.board.green2_pos[1] != self.board.red_pos[1] or self.board.green2_pos[0] > self.board.red_pos[0] or self.board.red_pos[0] > self.board.snake_pos[0][0]:
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green2_pos[0] < self.board.snake_pos[i][0] and self.board.snake_pos[0][0] > self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green2_pos]
+        return 0
+    
+    def green1_south(self):
+        obstacle = False
+        if self.board.green1_pos[0] > self.board.snake_pos[0][0]:# pomme verte west.
+            if self.board.green1_pos[1] != self.board.red_pos[1] or self.board.green1_pos[0] < self.board.red_pos[0] or self.board.red_pos[0] < self.board.snake_pos[0][0]:# rouge pas entre verte et tete
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:#snake body between green and head
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green1_pos[0] > self.board.snake_pos[i][0] and self.board.snake_pos[0][0] < self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green1_pos]
+        return 0
+    
+    def green2_south(self):
+        obstacle = False
+        if self.board.green2_pos[0] > self.board.snake_pos[0][0]:# pomme verte west.
+            if self.board.green2_pos[1] != self.board.red_pos[1] or self.board.green2_pos[0] < self.board.red_pos[0] or self.board.red_pos[0] < self.board.snake_pos[0][0]:# rouge pas entre verte et tete
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:#snake body between green and head
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green2_pos[0] > self.board.snake_pos[i][0] and self.board.snake_pos[0][0] < self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
             else:
                 return self.board.board[self.board.green2_pos]
         return 0
