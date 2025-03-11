@@ -128,9 +128,8 @@ class Game:
             """
             first_object_west = 0
             first_object_east = 0
-
-            head_x = 0
-            head_y = 0
+            first_object_north = 0
+            first_object_south = 0
 
             """
                 Pour chaque direction, verifie si pommeVerte.
@@ -148,17 +147,30 @@ class Game:
                 first_object_north = self.green1_north()
                 first_object_south = self.green1_south()
             
-            if self.board.green2_pos[0] == self.board.snake_pos[0][0] and (self.board.green1_pos[0] != self.board.snake_pos[0][0] or (self.board.green2_pos[1] > self.board.green1_pos[1] and self.board.green2_pos[1] < self.board.snake_pos[0][1])):
+            if self.board.green2_pos[0] == self.board.snake_pos[0][0] and first_object_west != 3:
                 first_object_west = self.green2_west()
-            elif self.board.green2_pos[0] == self.board.snake_pos[0][0] and (self.board.green1_pos[0] != self.board.snake_pos[0][0] or (self.board.green2_pos[1] < self.board.green1_pos[1] and self.board.green2_pos[1] > self.board.snake_pos[0][1])):
+            elif self.board.green2_pos[0] == self.board.snake_pos[0][0] and first_object_east != 3:
                 first_object_east = self.green2_east()
-            """
-                faire pareil pour green2
-                voir si green2 sur entre tete et green1
-                si oui, reva dans algo pour green2
-                continuer pour chaque direction
-            """            
+            #on seen fout de laquelle est la plus proche... on peut prendre les 2
+            if self.board.green2_pos[1] == self.board.snake_pos[0][1] and first_object_south != 3:
+                first_object_south = self.green2_south()
+            elif self.board.green2_pos[1] == self.board.snake_pos[0][1] and first_object_north != 3:
+                first_object_north = self.green2_north()
+            
+            if first_object_east == 0:
+                first_object_east = self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
+            if first_object_west == 0:
+                first_object_west = self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+            if first_object_south == 0:
+                first_object_south = self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
+            if first_object_north == 0:
+                first_object_north = self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
             print (first_object_west, first_object_east, first_object_north, first_object_south)
+            return first_object_west, first_object_east, first_object_north, first_object_south
+
+    """
+        marche pas quand east et west en mm temps
+    """
 
     def green1_west(self):
         obstacle = False
