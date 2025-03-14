@@ -1,8 +1,16 @@
-from Game import Game
-from Agent import Agent
+import argparse
 
-a = Agent()
+def main():
+    parser = argparse.ArgumentParser(description="Example script with arguments.")
+    parser.add_argument("--sessions", type=int, help="number of sessions")
+    parser.add_argument("--mode", type=str, help="train or display a model")
+    parser.add_argument("--modelname", type=str, help="chose an existing model (npy file) to continue training or display")
 
-g = Game()
+    args = parser.parse_args()
+    print(f"Number of episodes : {args.sessions}")
+    
+    if args.sessions:
+        print(f"{args.mode}")
 
-g.game_loop()
+if __name__ == "__main__":
+    main()

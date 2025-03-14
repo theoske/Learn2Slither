@@ -360,5 +360,3 @@ def train(num_episodes=10000):
     agent.save_q_table("snake_q_table.npy")
     
     return agent, rewards_per_episode
-
-agent, rewards = train(num_episodes=1000)
