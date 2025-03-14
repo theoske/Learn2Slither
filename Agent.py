@@ -1,39 +1,48 @@
 import numpy as np
 from Board import Board
+import random
 
 class Agent:
     """
         The agent can only take 4 decisions (up/down/left/right).
     """
-    def __init__(self):
+    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.995, min_exploration_rate=0.01):
         self.reward = 0
+        self.action_size = action_size
+        self.state_size = state_size
         self.state = 0
-        self.qtable = np.array((625, 4))
+        self.q_table = {}
         self.num_of_episodes = 0
         self.max_steps_per_episode = 0
-        self.learning_rate = 0
-        self.discount_factor = 0
-        self.exploration_rate = 0
+        self.learning_rate = learning_rate
+        self.discount_factor = discount_factor
+        self.exploration_rate = exploration_rate
+        self.exploration_decay = exploration_decay
+        self.min_exploration_rate = min_exploration_rate
         self.board = Board()
-
-    def learn(self):
-        for i in range(self.num_of_episodes):
-            self.episode()
-    
-    def episode(self):
-        for i in range(self.max_steps_per_episode):
-            self.state = self.get_state()
-            self.chose_action()
-            self.get_reward()
-
-    def chose_action(self):
-        pass
+        self.last_move = -1
     
     def get_reward(self):
-        pass
+        GREEN_APPLE_REWARD = 50
+        RED_APPLE_REWARD = -10
+        EMPTY_MOVE_REWARD = -1
+        DEATH_REWARD = -100
+        GREEN_DIRECTION_REWARD = 10
 
-    def save_state(self):
-        pass
+        if self.last_move == -1:
+            return 0
+        elif self.board.ate_green:
+            self.board.ate_green = False
+            return GREEN_APPLE_REWARD
+        elif self.board.ate_red:
+            self.board.ate_red = False
+            return RED_APPLE_REWARD
+        elif self.state[self.last_move] == 3 and self.board.death is False:
+            return GREEN_DIRECTION_REWARD
+        elif self.state[self.last_move] != 3:
+            return EMPTY_MOVE_REWARD
+        elif self.board.death:
+            return DEATH_REWARD
 
     def get_q_value(self, state, action):
         """Get Q-value for a state-action pair"""
@@ -72,90 +81,42 @@ class Agent:
     
     def choose_action(self, state):
         """Choose action using epsilon-greedy policy"""
-        # Convert state to tuple for dictionary lookup
-        state_tuple = tuple(map(tuple, state)) if isinstance(state, np.ndarray) else tuple(state)
+        # Convert state to a hashable tuple if it's not already
+        if isinstance(state, np.ndarray):
+            state_key = tuple(state.flatten())
+        elif isinstance(state, tuple):
+            # If it's a tuple containing numpy arrays, convert them to tuples
+            state_key = tuple(tuple(x) if isinstance(x, np.ndarray) else x for x in state)
+        else:
+            state_key = state
         
-        # If this state hasn't been seen before, add it to the Q-table
-        if state_tuple not in self.q_table:
-            self.q_table[state_tuple] = np.zeros(self.action_size)
+        # Use dictionary 'in' operator for lookup instead of numpy comparison
+        if state_key not in self.q_table:
+            self.q_table[state_key] = np.zeros(self.action_size)
         
         # Exploration: choose a random action
         if random.random() < self.exploration_rate:
             return random.randint(0, self.action_size - 1)
         # Exploitation: choose the action with highest Q-value
         else:
-            return np.argmax(self.q_table[state_tuple])
+            return np.argmax(self.q_table[state_key])
     
     def decay_exploration(self):
         """Decay the exploration rate"""
         self.exploration_rate = max(self.min_exploration_rate, self.exploration_rate * self.exploration_decay)
     
     def save_q_table(self, filename):
-        """Save Q-table to file"""
-        np.save(filename, self.q_table)
+        """Save Q-table to file using pickle instead of numpy.save"""
+        import pickle
+        with open(filename, 'wb') as f:
+            pickle.dump(self.q_table, f)
     
     def load_q_table(self, filename):
-        """Load Q-table from file"""
-        self.q_table = np.load(filename, allow_pickle=True).item()
+        """Load Q-table from file using pickle instead of numpy.load"""
+        import pickle
+        with open(filename, 'rb') as f:
+            self.q_table = pickle.load(f)
     
-    def train(get_state_function, perform_action_function, num_episodes=10000):
-        """
-        Training loop for the Snake Q-learning agent
-        
-        Parameters:
-        - get_state_function: Function that returns the current state of the game
-        - perform_action_function: Function that performs an action and returns (next_state, reward, done)
-        - num_episodes: Number of training episodes
-        """
-        # Initialize Q-learning agent
-        # Assuming 4 possible actions: 0=up, 1=right, 2=down, 3=left
-        agent = SnakeQLearning(state_size=None, action_size=4)  
-        
-        # Training statistics
-        rewards_per_episode = []
-    
-        for episode in range(num_episodes):
-            # Reset the game
-            state = get_state_function()  # This is your function that returns the game state
-            episode_reward = 0
-            done = False
-            
-            while not done:
-                # Choose action
-                action = agent.choose_action(state)
-                
-                # Perform action and get next state and reward
-                next_state, reward, done = perform_action_function(action)  # This is your function
-                
-                # Update Q-table
-                agent.update_q_value(state, action, reward, next_state)
-                
-                # Move to next state
-                state = next_state
-                
-                # Accumulate reward
-                episode_reward += reward
-                
-                # If game is over (snake crashed or reached max steps)
-                if done:
-                    break
-            
-            # Decay exploration rate
-            agent.decay_exploration()
-            
-            # Record rewards
-            rewards_per_episode.append(episode_reward)
-        
-        # Print progress every 100 episodes
-        if episode % 100 == 0:
-            avg_reward = np.mean(rewards_per_episode[-100:]) if len(rewards_per_episode) >= 100 else np.mean(rewards_per_episode)
-            print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
-    
-        # Save the trained Q-table
-        agent.save_q_table("snake_q_table.npy")
-        
-        return agent, rewards_per_episode
-
     def get_state(self):
             """
                 Takes the visible board and returns the closest tile or the closest green apple
@@ -199,6 +160,7 @@ class Agent:
                 first_object_south = self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
             if first_object_north == 0:
                 first_object_north = self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
+            self.state = (first_object_west, first_object_east, first_object_north, first_object_south)
             return (first_object_west, first_object_east, first_object_north, first_object_south)
 
     def green1_west(self):
@@ -265,7 +227,7 @@ class Agent:
                 return self.board.board[self.board.green2_pos]
         return 0
     
-    def green1_north(self):#a verifier
+    def green1_north(self):
         obstacle = False
         if self.board.green1_pos[0] < self.board.snake_pos[0][0]:
             if self.board.green1_pos[1] != self.board.red_pos[1] or self.board.green1_pos[0] > self.board.red_pos[0] or self.board.red_pos[0] > self.board.snake_pos[0][0]:
@@ -281,7 +243,7 @@ class Agent:
                 return self.board.board[self.board.green1_pos]
         return 0
     
-    def green2_north(self):#a verifier
+    def green2_north(self):
         obstacle = False
         if self.board.green2_pos[0] < self.board.snake_pos[0][0]:
             if self.board.green2_pos[1] != self.board.red_pos[1] or self.board.green2_pos[0] > self.board.red_pos[0] or self.board.red_pos[0] > self.board.snake_pos[0][0]:
@@ -328,6 +290,75 @@ class Agent:
             else:
                 return self.board.board[self.board.green2_pos]
         return 0
+    
+    def perform_action(self, action_nb : int):
+        if action_nb == 0:
+            self.board.snake_move_west()
+        elif action_nb == 1:
+            self.board.snake_move_east()
+        elif action_nb == 2:
+            self.board.snake_move_north()
+        elif action_nb == 3:
+            self.board.snake_move_south
+        return self.get_state(), self.get_reward(), self.board.death
 
 
 
+def train(num_episodes=10000):
+    """
+    Training loop for the Snake Q-learning agent
+    
+    Parameters:
+    - get_state_function: Function that returns the current state of the game
+    - perform_action_function: Function that performs an action and returns (next_state, reward, done)
+    - num_episodes: Number of training episodes
+    """
+    agent = Agent()
+    
+    # Training statistics
+    rewards_per_episode = []
+    
+    for episode in range(num_episodes):
+        # Reset the game
+        state = agent.get_state()  # This is your function that returns the game state
+        episode_reward = 0
+        done = False
+        
+        while not done:
+            # Choose action
+            action = agent.choose_action(state)
+            agent.last_move = action
+            # Perform action and get next state and reward
+            next_state, reward, done = agent.perform_action(action)  # This is your function
+            
+            # Update Q-table
+            agent.update_q_value(state, action, reward, next_state)
+            
+            # Move to next state
+            state = next_state
+            
+            # Accumulate reward
+            episode_reward += reward
+            
+            # If game is over (snake crashed or reached max steps)
+            if done:
+                break
+        
+        # Decay exploration rate
+        agent.decay_exploration()
+        
+        # Record rewards
+        rewards_per_episode.append(episode_reward)
+        
+        # Print progress every 100 episodes
+        if episode % 100 == 0:
+            avg_reward = np.mean(rewards_per_episode[-100:]) if len(rewards_per_episode) >= 100 else np.mean(rewards_per_episode)
+            print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
+        agent.board.resurect()
+    
+    # Save the trained Q-table
+    agent.save_q_table("snake_q_table.npy")
+    
+    return agent, rewards_per_episode
+
+agent, rewards = train(num_episodes=1000)

@@ -54,8 +54,6 @@ class Game:
                 self.death_screen()
             self.board.update_board()
             self.display_board()
-            #print(self.board.board)
-            self.vision_to_state()
 
     def display_board(self):
         self.screen.fill((0, 0, 0))
