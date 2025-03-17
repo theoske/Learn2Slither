@@ -1,6 +1,7 @@
 from Board import Board
 import pygame
 import cv2
+from Agent import Agent
 
 TILE_SIZE = 50
 
@@ -54,12 +55,41 @@ class Game:
                 self.death_screen()
             self.board.update_board()
             self.display_board()
+    
+    def display_gameplay(self, qtable_filename):
+        self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
+        self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
+        self.snake_sprite = pygame.image.load("sprites/snake.png").convert_alpha()
+        self.head_sprite = pygame.image.load("sprites/head.png").convert_alpha()
+        self.red_sprite =  pygame.image.load("sprites/red.png").convert_alpha()
+        self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
+        pygame.display.set_icon(self.head_sprite)
+        
+        agent = Agent()
+        agent.load_q_table(qtable_filename)
+        print("starttt")
+        clock = pygame.time.Clock()
+        running = True
+        while running is True:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+            state = agent.get_state()
+            action = agent.choose_action(state)
+            print(action)
+            agent.perform_action(action)
+            agent.get_agent_board().is_eating_apple()
+            if agent.get_agent_board().death:
+                self.death_screen()
+            agent.get_agent_board().update_board()
+            self.display_board(agent.get_agent_board())
+            clock.tick(1)
+            
 
-    def display_board(self):
+    def display_board(self, board= 0):
+        if board != 0:
+            self.board = board
         self.screen.fill((0, 0, 0))
-        camera_surface = self.update_camera_background()
-        if camera_surface is not None:
-            self.screen.blit(camera_surface, (0, 0))
         for y in range(self.board.board.shape[0]):
             for x in range(self.board.board.shape[1]):
                 value = self.board.board[y, x]
@@ -121,5 +151,5 @@ class Game:
 
     
     
-g = Game()
-g.game_loop()
+#g = Game()
+#g.game_loop()

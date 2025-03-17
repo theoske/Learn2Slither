@@ -128,6 +128,9 @@ class Board:
         self.board[self.red_pos] = 2
         self.board[self.green1_pos] = 3
         self.board[self.green2_pos] = 3
+    
+    def get_board(self):
+        return self.board
 
     def is_eating_apple(self):
         """

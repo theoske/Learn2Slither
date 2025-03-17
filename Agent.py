@@ -301,10 +301,13 @@ class Agent:
         elif action_nb == 3:
             self.board.snake_move_south
         return self.get_state(), self.get_reward(), self.board.death
+    
+    def get_agent_board(self):
+        return (self.board)
 
 
 
-def train(num_episodes=10000):
+def train(num_episodes=10000, qtable_filename = "snake_q_table.npy"):
     """
     Training loop for the Snake Q-learning agent
     
@@ -322,15 +325,16 @@ def train(num_episodes=10000):
         # Reset the game
         state = agent.get_state()  # This is your function that returns the game state
         episode_reward = 0
-        done = False
         
-        while not done:
+        while agent.board.death is False:
             # Choose action
             action = agent.choose_action(state)
             agent.last_move = action
             # Perform action and get next state and reward
             next_state, reward, done = agent.perform_action(action)  # This is your function
-            
+
+            agent.board.is_eating_apple()
+
             # Update Q-table
             agent.update_q_value(state, action, reward, next_state)
             
@@ -339,10 +343,6 @@ def train(num_episodes=10000):
             
             # Accumulate reward
             episode_reward += reward
-            
-            # If game is over (snake crashed or reached max steps)
-            if done:
-                break
         
         # Decay exploration rate
         agent.decay_exploration()
@@ -351,12 +351,14 @@ def train(num_episodes=10000):
         rewards_per_episode.append(episode_reward)
         
         # Print progress every 100 episodes
-        if episode % 100 == 0:
-            avg_reward = np.mean(rewards_per_episode[-100:]) if len(rewards_per_episode) >= 100 else np.mean(rewards_per_episode)
+        if False and episode % 10 == 0:
+            avg_reward = np.mean(rewards_per_episode[-10:]) if len(rewards_per_episode) >= 10 else np.mean(rewards_per_episode)
             print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
         agent.board.resurect()
     
     # Save the trained Q-table
-    agent.save_q_table("snake_q_table.npy")
+    agent.save_q_table(qtable_filename)
     
     return agent, rewards_per_episode
+
+#train()
