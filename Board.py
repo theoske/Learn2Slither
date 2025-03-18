@@ -17,7 +17,7 @@ class Board:
         self.ate_green = False
         self.ate_red = False
 
-    def resurect(self):
+    def resurrect(self):
         self.death = False
         self.board = np.zeros((12, 12), dtype=int)
         self.snake_pos = self.random_snake_pos()

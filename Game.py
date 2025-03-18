@@ -19,6 +19,7 @@ class Game:
         self.green_sprite = 0
         self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
         pygame.display.set_caption('SkibidiSlither')
+        self.last_move = -1
 
     
     def game_loop(self):
@@ -41,20 +42,228 @@ class Game:
                 exit(0)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    self.board.snake_move_north()
+                    self.board.snake_move_north() #state quand une des 2 pomme verte marche pas a distance pour north et east
+                    self.last_move = 2
                 elif event.key == pygame.K_DOWN:
+                    self.last_move = 3
                     self.board.snake_move_south()
                 elif event.key == pygame.K_LEFT:
                     self.board.snake_move_west()
+                    self.last_move = 0
                 elif event.key == pygame.K_RIGHT:
                     self.board.snake_move_east()
+                    self.last_move = 1
                 elif event.key == pygame.K_ESCAPE:
                     exit(0)
+            self.state = self.get_state()
+            print(self.state)
+            print(self.get_reward())
             self.board.is_eating_apple()
             if self.board.death:
                 self.death_screen()
             self.board.update_board()
             self.display_board()
+    
+    def get_reward(self):
+        GREEN_APPLE_REWARD = 50
+        RED_APPLE_REWARD = -10
+        EMPTY_MOVE_REWARD = -1
+        DEATH_REWARD = -100
+        GREEN_DIRECTION_REWARD = 10
+
+        if self.last_move == -1:
+            return 0
+        elif self.board.ate_green:
+            self.board.ate_green = False
+            return GREEN_APPLE_REWARD
+        elif self.board.ate_red:
+            self.board.ate_red = False
+            return RED_APPLE_REWARD
+        elif self.state[self.last_move] == 3 and self.board.death is False:
+            return GREEN_DIRECTION_REWARD
+        elif self.state[self.last_move] != 3 and self.board.death is False:
+            return EMPTY_MOVE_REWARD
+        elif self.board.death:
+            return DEATH_REWARD
+    
+    def get_state(self):
+            """
+                Takes the visible board and returns the closest tile or the closest green apple
+                if there is no obstacle between the snake's head and the apple.
+            """
+            first_object_west = 0
+            first_object_east = 0
+            first_object_north = 0
+            first_object_south = 0
+
+            """
+                Pour chaque direction, verifie si pommeVerte.
+                Obstacles potentiels: pomme rouge, queue.
+                Pomme rouge se verifie en comparant les coordonnées avec la pomme verte.
+                Queue se vérifie en regardant d'abord si présente dans la direction.
+                Si oui enregistrer coordonnées, comparer avec coordonnées pomme verte.
+
+                Si obstacle présent ou si pas de pomme verte, donner case la plus proche.
+            """
+            if self.board.green1_pos[0] == self.board.snake_pos[0][0]:
+                first_object_west = self.green1_west()
+                first_object_east = self.green1_east()
+            elif self.board.green1_pos[1] == self.board.snake_pos[0][1]:
+                first_object_north = self.green1_north()
+                first_object_south = self.green1_south()
+            
+            if self.board.green2_pos[0] == self.board.snake_pos[0][0]:
+                if first_object_west != 3:
+                    first_object_west = self.green2_west()
+                if first_object_east != 3:
+                    first_object_east = self.green2_east()
+            if self.board.green2_pos[1] == self.board.snake_pos[0][1]:
+                if first_object_south != 3:
+                    first_object_south = self.green2_south()
+                if first_object_north != 3:
+                    first_object_north = self.green2_north()
+            
+            if first_object_east == 0:
+                first_object_east = self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
+            if first_object_west == 0:
+                first_object_west = self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+            if first_object_south == 0:
+                first_object_south = self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
+            if first_object_north == 0:
+                first_object_north = self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
+            self.state = (first_object_west, first_object_east, first_object_north, first_object_south)
+            return (first_object_west, first_object_east, first_object_north, first_object_south)
+
+    def green1_west(self):
+        obstacle = False
+        if self.board.green1_pos[1] < self.board.snake_pos[0][1]:# pomme verte west.
+            if self.board.green1_pos[0] != self.board.red_pos[0] or self.board.green1_pos[1] > self.board.red_pos[1] or self.board.red_pos[1] > self.board.snake_pos[0][1]:# rouge pas entre verte et tete
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:#snake body between green and head
+                        if self.board.snake_pos[i][0] == self.board.snake_pos[0][0] and self.board.green1_pos[1] < self.board.snake_pos[i][1] and self.board.snake_pos[0][1] > self.board.snake_pos[i][1]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+            else:
+                return self.board.board[self.board.green1_pos]
+        return 0
+    
+    def green2_west(self):
+        obstacle = False
+        if self.board.green2_pos[1] < self.board.snake_pos[0][1]:# pomme verte west.
+            if self.board.green2_pos[0] != self.board.red_pos[0] or self.board.green2_pos[1] > self.board.red_pos[1] or self.board.red_pos[1] > self.board.snake_pos[0][1]:# rouge pas entre verte et tete
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:#snake body between green and head
+                        if self.board.snake_pos[i][0] == self.board.snake_pos[0][0] and self.board.green2_pos[1] < self.board.snake_pos[i][1] and self.board.snake_pos[0][1] > self.board.snake_pos[i][1]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] - 1]
+            else:
+                return self.board.board[self.board.green2_pos]
+        return 0
+    
+    def green1_east(self):
+        obstacle = False
+        if self.board.green1_pos[1] > self.board.snake_pos[0][1]:
+            if self.board.green1_pos[0] != self.board.red_pos[0] or self.board.green1_pos[1] < self.board.red_pos[1] or self.board.red_pos[1] < self.board.snake_pos[0][1]:
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:
+                        if self.board.snake_pos[i][0] == self.board.snake_pos[0][0] and self.board.green1_pos[1] > self.board.snake_pos[i][1] and self.board.snake_pos[0][1] < self.board.snake_pos[i][1]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
+            else:
+                return self.board.board[self.board.green1_pos]
+        return 0
+    
+    def green2_east(self):
+        print("2est")
+        obstacle = False
+        if self.board.green2_pos[1] > self.board.snake_pos[0][1]:
+            if self.board.green2_pos[0] != self.board.red_pos[0] or self.board.green2_pos[1] < self.board.red_pos[1] or self.board.red_pos[1] < self.board.snake_pos[0][1]:
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:
+                        if self.board.snake_pos[i][0] == self.board.snake_pos[0][0] and self.board.green2_pos[1] > self.board.snake_pos[i][1] and self.board.snake_pos[0][1] < self.board.snake_pos[i][1]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                print("obstacle22")
+                return self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
+            else:
+                print("green22")#pb
+                return self.board.board[self.board.green2_pos]
+        return 0
+    
+    def green1_north(self):
+        obstacle = False
+        if self.board.green1_pos[0] < self.board.snake_pos[0][0]:
+            if self.board.green1_pos[1] != self.board.red_pos[1] or self.board.green1_pos[0] > self.board.red_pos[0] or self.board.red_pos[0] > self.board.snake_pos[0][0]:
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green1_pos[0] < self.board.snake_pos[i][0] and self.board.snake_pos[0][0] > self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green1_pos]
+        return 0
+    
+    def green2_north(self):
+        obstacle = False
+        if self.board.green2_pos[0] < self.board.snake_pos[0][0]:
+            if self.board.green2_pos[1] != self.board.red_pos[1] or self.board.green2_pos[0] > self.board.red_pos[0] or self.board.red_pos[0] > self.board.snake_pos[0][0]:
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green2_pos[0] < self.board.snake_pos[i][0] and self.board.snake_pos[0][0] > self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] - 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green2_pos]
+        return 0
+    
+    def green1_south(self):
+        obstacle = False
+        if self.board.green1_pos[0] > self.board.snake_pos[0][0]:# pomme verte west.
+            if self.board.green1_pos[1] != self.board.red_pos[1] or self.board.green1_pos[0] < self.board.red_pos[0] or self.board.red_pos[0] < self.board.snake_pos[0][0]:# rouge pas entre verte et tete
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:#snake body between green and head
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green1_pos[0] > self.board.snake_pos[i][0] and self.board.snake_pos[0][0] < self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green1_pos]
+        return 0
+    
+    def green2_south(self):
+        obstacle = False
+        if self.board.green2_pos[0] > self.board.snake_pos[0][0]:# pomme verte west.
+            if self.board.green2_pos[1] != self.board.red_pos[1] or self.board.green2_pos[0] < self.board.red_pos[0] or self.board.red_pos[0] < self.board.snake_pos[0][0]:# rouge pas entre verte et tete
+                for i in range(len(self.board.snake_pos)):
+                    if i > 0:#snake body between green and head
+                        if self.board.snake_pos[i][1] == self.board.snake_pos[0][1] and self.board.green2_pos[0] > self.board.snake_pos[i][0] and self.board.snake_pos[0][0] < self.board.snake_pos[i][0]:
+                            obstacle = True
+            else:
+                obstacle = True
+            if obstacle:
+                return self.board.board[self.board.snake_pos[0][0] + 1, self.board.snake_pos[0][1]]
+            else:
+                return self.board.board[self.board.green2_pos]
+        return 0
     
     def display_gameplay(self, qtable_filename):
         self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
@@ -75,7 +284,7 @@ class Game:
                 if event.type == pygame.QUIT:
                     running = False
             state = agent.get_state()
-            action = agent.choose_action(state)
+            action = agent.chose_action(state)
             print(action)
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
@@ -127,7 +336,7 @@ class Game:
                 if event.key == pygame.K_ESCAPE:
                     exit(0)
                 elif event.key == pygame.K_RETURN:
-                    self.board = Board()
+                    self.board.resurrect()
                     self.game_loop()
             
     def setup_camera_background(self):

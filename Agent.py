@@ -6,7 +6,7 @@ class Agent:
     """
         The agent can only take 4 decisions (up/down/left/right).
     """
-    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.995, min_exploration_rate=0.01):
+    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.999995, min_exploration_rate=0.01):
         self.reward = 0
         self.action_size = action_size
         self.state_size = state_size
@@ -31,18 +31,19 @@ class Agent:
 
         if self.last_move == -1:
             return 0
+        elif self.board.death:
+            return DEATH_REWARD
         elif self.board.ate_green:
             self.board.ate_green = False
             return GREEN_APPLE_REWARD
         elif self.board.ate_red:
             self.board.ate_red = False
             return RED_APPLE_REWARD
-        elif self.state[self.last_move] == 3 and self.board.death is False:
+        elif self.state[self.last_move] == 3:
             return GREEN_DIRECTION_REWARD
         elif self.state[self.last_move] != 3:
             return EMPTY_MOVE_REWARD
-        elif self.board.death:
-            return DEATH_REWARD
+        
 
     def get_q_value(self, state, action):
         """Get Q-value for a state-action pair"""
@@ -79,8 +80,8 @@ class Agent:
         # Update Q-table
         self.q_table[state_tuple][action] = new_q
     
-    def choose_action(self, state):
-        """Choose action using epsilon-greedy policy"""
+    def chose_action(self, state):
+        """chose action using epsilon-greedy policy"""
         # Convert state to a hashable tuple if it's not already
         if isinstance(state, np.ndarray):
             state_key = tuple(state.flatten())
@@ -90,14 +91,13 @@ class Agent:
         else:
             state_key = state
         
-        # Use dictionary 'in' operator for lookup instead of numpy comparison
         if state_key not in self.q_table:
             self.q_table[state_key] = np.zeros(self.action_size)
         
-        # Exploration: choose a random action
+        # Exploration: chose a random action
         if random.random() < self.exploration_rate:
             return random.randint(0, self.action_size - 1)
-        # Exploitation: choose the action with highest Q-value
+        # Exploitation: chose the action with highest Q-value
         else:
             return np.argmax(self.q_table[state_key])
     
@@ -143,14 +143,16 @@ class Agent:
                 first_object_north = self.green1_north()
                 first_object_south = self.green1_south()
             
-            if self.board.green2_pos[0] == self.board.snake_pos[0][0] and first_object_west != 3:
-                first_object_west = self.green2_west()
-            elif self.board.green2_pos[0] == self.board.snake_pos[0][0] and first_object_east != 3:
-                first_object_east = self.green2_east()
-            if self.board.green2_pos[1] == self.board.snake_pos[0][1] and first_object_south != 3:
-                first_object_south = self.green2_south()
-            elif self.board.green2_pos[1] == self.board.snake_pos[0][1] and first_object_north != 3:
-                first_object_north = self.green2_north()
+            if self.board.green2_pos[0] == self.board.snake_pos[0][0]:
+                if first_object_west != 3:
+                    first_object_west = self.green2_west()
+                if first_object_east != 3:
+                    first_object_east = self.green2_east()
+            if self.board.green2_pos[1] == self.board.snake_pos[0][1]:
+                if first_object_south != 3:
+                    first_object_south = self.green2_south()
+                if first_object_north != 3:
+                    first_object_north = self.green2_north()
             
             if first_object_east == 0:
                 first_object_east = self.board.board[self.board.snake_pos[0][0], self.board.snake_pos[0][1] + 1]
@@ -299,7 +301,8 @@ class Agent:
         elif action_nb == 2:
             self.board.snake_move_north()
         elif action_nb == 3:
-            self.board.snake_move_south
+            self.board.snake_move_south()
+        self.board.update_board()
         return self.get_state(), self.get_reward(), self.board.death
     
     def get_agent_board(self):
@@ -307,7 +310,7 @@ class Agent:
 
 
 
-def train(num_episodes=10000, qtable_filename = "snake_q_table.npy"):
+def train(num_episodes=1000000, qtable_filename = "snake_q_table.npy"):
     """
     Training loop for the Snake Q-learning agent
     
@@ -322,43 +325,38 @@ def train(num_episodes=10000, qtable_filename = "snake_q_table.npy"):
     rewards_per_episode = []
     
     for episode in range(num_episodes):
-        # Reset the game
-        state = agent.get_state()  # This is your function that returns the game state
+        state = agent.get_state()
         episode_reward = 0
-        
+        state_list, action_list, reward_list, next_state_list = [], [], [], []
         while agent.board.death is False:
-            # Choose action
-            action = agent.choose_action(state)
+            action = agent.chose_action(state)
             agent.last_move = action
-            # Perform action and get next state and reward
-            next_state, reward, done = agent.perform_action(action)  # This is your function
-
+            next_state, reward, done = agent.perform_action(action)
+            print(f"State: {state}, Action: {action}, Reward: {reward}")#recompense de laction quil fait dans un etat
             agent.board.is_eating_apple()
-
-            # Update Q-table
-            agent.update_q_value(state, action, reward, next_state)
-            
-            # Move to next state
+            #if (agent.board.death is False):
+                #agent.board.update_board()
             state = next_state
-            
-            # Accumulate reward
             episode_reward += reward
-        
-        # Decay exploration rate
+            state_list.append(state)
+            action_list.append(action)
+            reward_list.append(reward)
+            next_state_list.append(next_state)
+        for i in range(len(state_list)):
+            agent.update_q_value(state_list[i], action_list[i], reward_list[i], next_state_list[i])
         agent.decay_exploration()
         
-        # Record rewards
         rewards_per_episode.append(episode_reward)
         
-        # Print progress every 100 episodes
-        if False and episode % 10 == 0:
-            avg_reward = np.mean(rewards_per_episode[-10:]) if len(rewards_per_episode) >= 10 else np.mean(rewards_per_episode)
-            print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
-        agent.board.resurect()
+        if episode % 1000 == 0:
+            avg_reward = np.mean(rewards_per_episode[-1000:]) if len(rewards_per_episode) >= 1000 else np.mean(rewards_per_episode)
+            #print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
+        agent.board.resurrect()
     
     # Save the trained Q-table
     agent.save_q_table(qtable_filename)
     
     return agent, rewards_per_episode
 
-#train()
+train(num_episodes=10)
+#verif si reward correspond a action et state
