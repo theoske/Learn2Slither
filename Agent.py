@@ -6,7 +6,7 @@ class Agent:
     """
         The agent can only take 4 decisions (up/down/left/right).
     """
-    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.95, min_exploration_rate=0.01):
+    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.5, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.95, min_exploration_rate=0.01):
         self.reward = 0
         self.action_size = action_size
         self.state_size = state_size
@@ -308,7 +308,7 @@ class Agent:
 
 
 
-def train(num_episodes=100, qtable_filename = "snake_q_table.npy"):
+def train(num_episodes=100, qtable_filename = "snake_q_table.npy", decay=0.95):
     """
     Training loop for the Snake Q-learning agent
     
@@ -317,7 +317,7 @@ def train(num_episodes=100, qtable_filename = "snake_q_table.npy"):
     - perform_action_function: Function that performs an action and returns (next_state, reward, done)
     - num_episodes: Number of training episodes
     """
-    agent = Agent()
+    agent = Agent(exploration_decay=decay)
     
     rewards_per_episode = []
     
@@ -355,6 +355,6 @@ def train(num_episodes=100, qtable_filename = "snake_q_table.npy"):
     
     return agent, rewards_per_episode
 
-#train(num_episodes=1000)
+#train(num_episodes=1000000, qtable_filename="snake1000000.npy", decay=0.99999)
 # verif si reward correspond a action et state
 # decalage mange pomme-recompense

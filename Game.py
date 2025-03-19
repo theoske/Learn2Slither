@@ -99,23 +99,32 @@ class Game:
         agent.load_q_table(qtable_filename)
         print("starttt")
         clock = pygame.time.Clock()
+        max_len = 0
+        duration = 0
         running = True
         while running is True:
+            duration += 1
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
             state = agent.get_state()
             action = agent.chose_action(state)
-            print(action)
+            print(agent.get_agent_board().get_agent_vision())
+            self.print_action(action)
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
             if agent.get_agent_board().death:
+                print(f"Max length of snake: {max_len}, Duration: {duration}")
                 self.death_screen()
             agent.get_agent_board().update_board()
             self.display_board(agent.get_agent_board())
-            clock.tick(1)
-            
-
+            if len(agent.get_agent_board().snake_pos) > max_len:
+                max_len = len(agent.get_agent_board().snake_pos)
+            clock.tick(20)
+        print(f"Max length of snake: {max_len}")
+    def print_action(self, action):
+        value_list = ["west", "east", "north", "down"]
+        print(value_list[action])
     def display_board(self, board= 0):
         if board != 0:
             self.board = board
