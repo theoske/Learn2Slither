@@ -6,7 +6,7 @@ class Agent:
     """
         The agent can only take 4 decisions (up/down/left/right).
     """
-    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.999995, min_exploration_rate=0.01):
+    def __init__(self, state_size = 625, action_size = 4, learning_rate=0.1, discount_factor=0.95, exploration_rate=1.0, exploration_decay=0.95, min_exploration_rate=0.01):
         self.reward = 0
         self.action_size = action_size
         self.state_size = state_size
@@ -33,11 +33,9 @@ class Agent:
             return 0
         elif self.board.death:
             return DEATH_REWARD
-        elif self.board.ate_green:
-            self.board.ate_green = False
+        elif self.board.snake_pos[0] == self.board.green1_pos or self.board.snake_pos[0] == self.board.green2_pos:
             return GREEN_APPLE_REWARD
-        elif self.board.ate_red:
-            self.board.ate_red = False
+        elif self.board.red_pos == self.board.snake_pos[0]:
             return RED_APPLE_REWARD
         elif self.state[self.last_move] == 3:
             return GREEN_DIRECTION_REWARD
@@ -310,7 +308,7 @@ class Agent:
 
 
 
-def train(num_episodes=1000000, qtable_filename = "snake_q_table.npy"):
+def train(num_episodes=100, qtable_filename = "snake_q_table.npy"):
     """
     Training loop for the Snake Q-learning agent
     
@@ -321,7 +319,6 @@ def train(num_episodes=1000000, qtable_filename = "snake_q_table.npy"):
     """
     agent = Agent()
     
-    # Training statistics
     rewards_per_episode = []
     
     for episode in range(num_episodes):
@@ -332,10 +329,10 @@ def train(num_episodes=1000000, qtable_filename = "snake_q_table.npy"):
             action = agent.chose_action(state)
             agent.last_move = action
             next_state, reward, done = agent.perform_action(action)
-            print(f"State: {state}, Action: {action}, Reward: {reward}")#recompense de laction quil fait dans un etat
+            #print(f"State: {state}, Action: {action}, Reward: {reward}")#recompense de laction quil fait dans un etat
             agent.board.is_eating_apple()
-            #if (agent.board.death is False):
-                #agent.board.update_board()
+            if (agent.board.death is False):
+                agent.board.update_board()
             state = next_state
             episode_reward += reward
             state_list.append(state)
@@ -347,10 +344,10 @@ def train(num_episodes=1000000, qtable_filename = "snake_q_table.npy"):
         agent.decay_exploration()
         
         rewards_per_episode.append(episode_reward)
-        
-        if episode % 1000 == 0:
-            avg_reward = np.mean(rewards_per_episode[-1000:]) if len(rewards_per_episode) >= 1000 else np.mean(rewards_per_episode)
-            #print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
+        interval = (int)(num_episodes/10)
+        if episode % interval == 0:
+            avg_reward = np.mean(rewards_per_episode[-interval:]) if len(rewards_per_episode) >= interval else np.mean(rewards_per_episode)
+            print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
         agent.board.resurrect()
     
     # Save the trained Q-table
@@ -358,5 +355,6 @@ def train(num_episodes=1000000, qtable_filename = "snake_q_table.npy"):
     
     return agent, rewards_per_episode
 
-train(num_episodes=10)
-#verif si reward correspond a action et state
+#train(num_episodes=1000)
+# verif si reward correspond a action et state
+# decalage mange pomme-recompense

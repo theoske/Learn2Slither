@@ -14,8 +14,6 @@ class Board:
         self.green1_pos = self.random_apple_pos()
         self.green2_pos = self.random_apple_pos()
         self.gen_board()
-        self.ate_green = False
-        self.ate_red = False
 
     def resurrect(self):
         self.death = False
@@ -25,8 +23,6 @@ class Board:
         self.green1_pos = self.random_apple_pos()
         self.green2_pos = self.random_apple_pos()
         self.gen_board()
-        self.ate_green = False
-        self.ate_red = False
 
     def gen_board(self):
         while (self.red_pos in self.snake_pos):
@@ -162,7 +158,6 @@ class Board:
 
     def reduce_snake(self):
         self.snake_pos.pop()
-        self.ate_red = True
         if len(self.snake_pos) == 0:
             self.death = True
             return
@@ -170,7 +165,6 @@ class Board:
     def augment_snake(self):
         tail = self.snake_pos[-1]
         self.snake_pos.append(tail)
-        self.ate_green = True
     
     def get_agent_vision(self):
         """
