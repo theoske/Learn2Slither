@@ -97,7 +97,6 @@ class Game:
         
         agent = Agent(exploration_rate=0)
         agent.load_q_table(qtable_filename)
-        print("starttt")
         clock = pygame.time.Clock()
         max_len = 0
         duration = 0
@@ -110,6 +109,7 @@ class Game:
             state = agent.get_state()
             action = agent.chose_action(state)
             print(agent.get_agent_board().get_agent_vision())
+            print(state)
             self.print_action(action)
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
