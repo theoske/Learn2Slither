@@ -34,4 +34,4 @@ def show_gameplay(qtable_filename):
     g.display_gameplay(qtable_filename)
 
 print("bbb")
-show_gameplay("snake1000.npy")
+show_gameplay("snake100.npy")
