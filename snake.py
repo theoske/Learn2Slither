@@ -27,8 +27,7 @@ def main():
     
     #verifier quel si le model existe deja. si oui l'utiliser en fonction du mode (train/display)
     if args.modelname is None or args.modelname.endswith(".npy") is False or args.mode is None:#erreur
-        print("Usage: python3 snake.py --modelname <filename.npy> --mode <train/play> --sessions <int> --ui <on/off>")
-        exit(0)
+        print_error()
     elif os.path.isfile(args.modelname):#filename existe
         if args.mode == "train": #continue training utiliser load_qtable
             agent = Agent()
@@ -41,7 +40,11 @@ def main():
             else:
                 pass#play no ui
         else:
-            print("Usage: python3 snake.py --modelname <filename.npy> --mode <train/play> --sessions <int> --ui <on/off>")
+            print_error()
+
+def print_error():
+    print("Usage: python3 snake.py --modelname <filename.npy> --mode <train/play> --sessions <int> --ui <on/off>")
+    exit(1)
 
 if __name__ == "__main__":
     main()
