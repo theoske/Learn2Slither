@@ -1,14 +1,18 @@
 import argparse
 from Game import Game
+from Agent import Agent, train
 import os.path
 
 """
-    Entrainement avec nombre de session et nom du fichier qtable.
-    Faire jouer partie a partir de fichier qtable avec ui et sans.
-    -> quand sans indiquer le nombre de session jouer et la taille max et le nombre max de coup joués
-    continuer entrainement a partir d'un fichier qtabke deja existant.
+    step-by-step avec entrer par défaut en fonction de la commande. Appuyer sur espace pour changer (->human readable -> computer speed).
 
-    parametres : mode (train/play)    session_nb    qtable_file_name    --ui (on/off)
+    Entrainement de nouveau model sans ui.
+    Entrainement de nouveau model avec ui.
+    Entrainement de model deja existant sans ui.
+    Entrainement de model deja existant avec ui.
+
+    Démonstration model sans ui.
+    Démonstration model avec ui.
 """
 def main():
     parser = argparse.ArgumentParser(description="Example script with arguments.")
@@ -22,14 +26,20 @@ def main():
     print(f"Number of episodes : {args.sessions}")
     
     #verifier quel si le model existe deja. si oui l'utiliser en fonction du mode (train/display)
-    if args.modelname is None or args.modelname.endswith(".npy") is False or args.mode is None:
+    if args.modelname is None or args.modelname.endswith(".npy") is False or args.mode is None:#erreur
         print("Usage: python3 snake.py --modelname <filename.npy> --mode <train/play> --sessions <int> --ui <on/off>")
         exit(0)
-    elif os.path.isfile(args.modelname):
-        if args.mode == "train":
-            pass# continue training
-        elif args.mode == "play":
-            pass#make model play
+    elif os.path.isfile(args.modelname):#filename existe
+        if args.mode == "train": #continue training utiliser load_qtable
+            agent = Agent()
+            agent.load_qtable(args.modelname)
+            if args.sessions > 0:
+                train(num_episodes=args.sessions, agent= agent)
+        elif args.mode == "play":# ui on-off
+            if args.ui == "on":
+                show_gameplay(args.modelname)
+            else:
+                pass#play no ui
         else:
             print("Usage: python3 snake.py --modelname <filename.npy> --mode <train/play> --sessions <int> --ui <on/off>")
 

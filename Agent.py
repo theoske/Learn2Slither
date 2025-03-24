@@ -307,7 +307,7 @@ class Agent:
 
 
 
-def train(num_episodes=100, qtable_filename = "snake_q_table.npy", decay=0.95):
+def train(num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent()):
     """
     Training loop for the Snake Q-learning agent
     
@@ -316,7 +316,6 @@ def train(num_episodes=100, qtable_filename = "snake_q_table.npy", decay=0.95):
     - perform_action_function: Function that performs an action and returns (next_state, reward, done)
     - num_episodes: Number of training episodes
     """
-    agent = Agent(exploration_decay=decay)
     
     rewards_per_episode = []
     
