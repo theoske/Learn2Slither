@@ -32,10 +32,14 @@ class Train:
         self.t1.start()
         rewards_per_episode = []
         for episode in range(self.num_episodes):
+            if self.is_running is False:
+                exit(0)
             state = self.agent.get_state()
             episode_reward = 0
             state_list, action_list, reward_list, next_state_list = [], [], [], []
             while self.agent.board.death is False:
+                if self.is_running is False:
+                    exit(0)
                 action = self.agent.chose_action(state)
                 print(self.agent.board.get_board())
                 self.agent.last_move = action
@@ -51,12 +55,10 @@ class Train:
                 reward_list.append(reward)
                 next_state_list.append(next_state)
                 while self.rate == 0 and self.next_step is False:
-                    if self.is_running is False:
-                        exit(0)
-                    sleep(0.1)
+                    pass
+                if self.rate == 1:
+                    sleep(1)
                 self.next_step = False
-            if self.rate == 1:
-                sleep(1)
             for i in range(len(state_list)):
                 self.agent.update_q_value(state_list[i], action_list[i], reward_list[i], next_state_list[i])
             self.agent.decay_exploration()
@@ -79,7 +81,7 @@ class Train:
             elif key == Key.esc or self.is_running is False:
                 print("Exiting...")
                 self.is_running = False
-                return False
+                exit(0)
 
         with Listener(on_release=on_release) as listener:
             self.listener = listener
