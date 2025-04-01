@@ -1,7 +1,8 @@
 import argparse
 from Game import Game
-from Agent import Agent, train
+from Agent import Agent
 import os.path
+from Train import Train
 
 """
     step-by-step avec entrer par défaut en fonction de la commande. Appuyer sur espace pour changer (->human readable -> computer speed).
@@ -20,7 +21,7 @@ def main():
     parser.add_argument("--mode", type=str, help="train or play a model")
     parser.add_argument("--modelname", type=str, help="chose an existing model (npy file) to continue training or display")
     parser.add_argument("--ui", type=str, help="<on/off> decides if want to display a game of the model")
-    parser.add_argument("--step", type=str, help="<on/off> decides if want to train/play model step-by-step")
+    parser.add_argument("--rate", type=str, help="<step/human/cpu> decides if want to train/play model step-by-step or human readable or computer speed")
 
     args = parser.parse_args()
     print(f"Number of episodes : {args.sessions}")
@@ -41,6 +42,16 @@ def main():
                 pass#play no ui
         else:
             print_error()
+    elif os.path.isfile(args.modelname) is False:# train basic
+        if args.mode == "train":
+            agent = Agent()
+            rate = int(args.rate)
+            if args.rate is None:
+                rate = 0
+            if args.sessions > 0:
+                t = Train(num_episodes=args.sessions, agent= agent, rate= rate)
+                t.train()
+                
 
 def print_error():
     print("Usage: python3 snake.py --modelname <filename.npy> --mode <train/play> --sessions <int> --ui <on/off>")

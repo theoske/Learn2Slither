@@ -1,17 +1,20 @@
 from Agent import Agent
 import numpy as np
 import threading
-import keyboard
+from pynput.keyboard import Key, Listener
+from time import sleep
 
 class Train:
-    def __init__(self, num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), cadence = 0):
+    def __init__(self, num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), rate = 0):
         self.num_episodes = num_episodes
         self.qtable_filename = qtable_filename
         self.decay = decay
         self.agent = agent
-        self.cadence = cadence
-        self.t1 = threading.Thread(self.change_cadence)
+        self.rate = rate
         self.is_running = True
+        self.next_step = False
+        self.listener = None
+        self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
     
     def train(self):
         """
@@ -22,24 +25,24 @@ class Train:
         - perform_action_function: Function that performs an action and returns (next_state, reward, done)
         - num_episodes: Number of training episodes
 
-        cadence:    0 step-by-step
-                    1 human readable (5/s)
-                    2 computer speed
+        rate:   0 step-by-step
+                1 human readable (5/s)
+                2 computer speed
         """
         self.t1.start()
         rewards_per_episode = []
-        
         for episode in range(self.num_episodes):
             state = self.agent.get_state()
             episode_reward = 0
             state_list, action_list, reward_list, next_state_list = [], [], [], []
             while self.agent.board.death is False:
                 action = self.agent.chose_action(state)
+                print(self.agent.board.get_board())
                 self.agent.last_move = action
+                print(action)
                 next_state, reward, done = self.agent.perform_action(action)
-                #print(f"State: {state}, Action: {action}, Reward: {reward}")#recompense de laction quil fait dans un etat
                 self.agent.board.is_eating_apple()
-                if (self.agent.board.death is False):
+                if self.agent.board.death is False:
                     self.agent.board.update_board()
                 state = next_state
                 episode_reward += reward
@@ -47,22 +50,37 @@ class Train:
                 action_list.append(action)
                 reward_list.append(reward)
                 next_state_list.append(next_state)
+                while self.rate == 0 and self.next_step is False:
+                    if self.is_running is False:
+                        exit(0)
+                    sleep(0.1)
+                self.next_step = False
+            if self.rate == 1:
+                sleep(1)
             for i in range(len(state_list)):
                 self.agent.update_q_value(state_list[i], action_list[i], reward_list[i], next_state_list[i])
             self.agent.decay_exploration()
             rewards_per_episode.append(episode_reward)
-            interval = (int)(self.num_episodes/10)
-            if interval > 0 and episode % interval == 0:
-                avg_reward = np.mean(rewards_per_episode[-interval:]) if len(rewards_per_episode) >= interval else np.mean(rewards_per_episode)
-                print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {self.agent.exploration_rate:.2f}")
             self.agent.board.resurrect()
+            
         self.is_running = False
-        # Save the trained Q-table
+        self.listener.stop()
         self.agent.save_q_table(self.qtable_filename)
         self.t1.join()
         return self.agent, rewards_per_episode
     
-    def change_cadence(self):
-        while self.is_running:
-            if keyboard.is_pressed("\n"):
-                self.cadence = 0 if self.cadence == 3 else self.cadence + 1
+    def listen_for_keys(self):
+        def on_release(key):
+            if key == Key.space:
+                self.rate = 0 if self.rate == 2 else self.rate + 1
+                print(f"Rate changed to {self.rate}")
+            elif key == Key.enter:
+                self.next_step = True
+            elif key == Key.esc or self.is_running is False:
+                print("Exiting...")
+                self.is_running = False
+                return False
+
+        with Listener(on_release=on_release) as listener:
+            self.listener = listener
+            listener.join()

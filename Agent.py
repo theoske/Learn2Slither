@@ -306,59 +306,6 @@ class Agent:
     def get_agent_board(self):
         return (self.board)
 
-
-#doit etre mis dans une classe pour que cadence puisse etre modif
-def train(num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), cadence = 0):
-    """
-    Training loop for the Snake Q-learning agent
-    
-    Parameters:
-    - get_state_function: Function that returns the current state of the game
-    - perform_action_function: Function that performs an action and returns (next_state, reward, done)
-    - num_episodes: Number of training episodes
-
-    cadence:    0 step-by-step
-                1 human readable (5/s)
-                2 computer speed
-    """
-    
-    rewards_per_episode = []
-    
-    for episode in range(num_episodes):
-
-        state = agent.get_state()
-        episode_reward = 0
-        state_list, action_list, reward_list, next_state_list = [], [], [], []
-        while agent.board.death is False:
-            action = agent.chose_action(state)
-            agent.last_move = action
-            next_state, reward, done = agent.perform_action(action)
-            #print(f"State: {state}, Action: {action}, Reward: {reward}")#recompense de laction quil fait dans un etat
-            agent.board.is_eating_apple()
-            if (agent.board.death is False):
-                agent.board.update_board()
-            state = next_state
-            episode_reward += reward
-            state_list.append(state)
-            action_list.append(action)
-            reward_list.append(reward)
-            next_state_list.append(next_state)
-        for i in range(len(state_list)):
-            agent.update_q_value(state_list[i], action_list[i], reward_list[i], next_state_list[i])
-        agent.decay_exploration()
-        
-        rewards_per_episode.append(episode_reward)
-        interval = (int)(num_episodes/10)
-        if interval > 0 and episode % interval == 0:
-            avg_reward = np.mean(rewards_per_episode[-interval:]) if len(rewards_per_episode) >= interval else np.mean(rewards_per_episode)
-            print(f"Episode: {episode}, Average Reward: {avg_reward:.2f}, Exploration Rate: {agent.exploration_rate:.2f}")
-        agent.board.resurrect()
-    
-    # Save the trained Q-table
-    agent.save_q_table(qtable_filename)
-    
-    return agent, rewards_per_episode
-
 #train(num_episodes=1000000, qtable_filename="snake1000000.npy", decay=0.995)
 # verif si reward correspond a action et state
 # decalage mange pomme-recompense
