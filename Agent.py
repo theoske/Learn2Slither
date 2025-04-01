@@ -20,6 +20,7 @@ class Agent:
         self.min_exploration_rate = min_exploration_rate
         self.board = Board()
         self.last_move = -1
+        self.step_mode = 0
     
     def get_reward(self):
         GREEN_APPLE_REWARD = 50
@@ -306,8 +307,8 @@ class Agent:
         return (self.board)
 
 
-
-def train(num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent()):
+#doit etre mis dans une classe pour que cadence puisse etre modif
+def train(num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), cadence = 0):
     """
     Training loop for the Snake Q-learning agent
     
@@ -315,11 +316,16 @@ def train(num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995,
     - get_state_function: Function that returns the current state of the game
     - perform_action_function: Function that performs an action and returns (next_state, reward, done)
     - num_episodes: Number of training episodes
+
+    cadence:    0 step-by-step
+                1 human readable (5/s)
+                2 computer speed
     """
     
     rewards_per_episode = []
     
     for episode in range(num_episodes):
+
         state = agent.get_state()
         episode_reward = 0
         state_list, action_list, reward_list, next_state_list = [], [], [], []
