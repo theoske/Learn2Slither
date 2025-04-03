@@ -161,8 +161,8 @@ class Game:
         print(value_list[action])
 
     def display_board(self, board= 0):
-        if board != 0:
-            self.board = board
+        if isinstance(board, int) is False:
+            self.board = board #cette board est larray np et pas la classe
         self.screen.fill((0, 0, 0))
         for y in range(self.board.board.shape[0]):
             for x in range(self.board.board.shape[1]):

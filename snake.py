@@ -26,31 +26,43 @@ def main():
     args = parser.parse_args()
     print(f"Number of episodes : {args.sessions}")
     
-    #verifier quel si le model existe deja. si oui l'utiliser en fonction du mode (train/display)
-    if args.modelname is None or args.modelname.endswith(".npy") is False or args.mode is None:#erreur
-        print_error()
-    elif os.path.isfile(args.modelname):#filename existe
+    
+    if os.path.isfile(args.modelname):#filename exist
         if args.mode == "train": #continue training utiliser load_qtable
             agent = Agent()
             agent.load_qtable(args.modelname)
             if args.sessions > 0:
-                train(num_episodes=args.sessions, agent= agent)
-        elif args.mode == "play":# ui on-off
+                if args.ui == "on":
+                    t = Train(num_episodes=args.sessions, agent= agent, is_ui_on=True)
+                else:
+                    t = Train(num_episodes=args.sessions, agent= agent, is_ui_on=False)
+                t.train()
+        elif args.mode == "play": #make model play without training it
             if args.ui == "on":
-                show_gameplay(args.modelname)
+                g = Game(is_ui_on=True)
+                g.display_gameplay(args.modelname)
             else:
-                pass#play no ui
+                g = Game(is_ui_on=False)
+                g.display_gameplay(args.modelname)
         else:
             print_error()
-    elif os.path.isfile(args.modelname) is False:# train basic
-        if args.mode == "train":
+    elif os.path.isfile(args.modelname) is False: #filename doesnt exist
+        if args.mode == "train": #create and train new model
             agent = Agent()
             rate = int(args.rate)
             if args.rate is None:
                 rate = 0
             if args.sessions > 0:
-                t = Train(num_episodes=args.sessions, agent= agent, rate= rate)
+                if (args.ui == "on"):
+                    t = Train(num_episodes=args.sessions, agent= agent, rate= rate, is_ui_on= True)
+                else:
+                    t = Train(num_episodes=args.sessions, agent= agent, rate= rate, is_ui_on= False)
                 t.train()
+        elif args.mode == "play": #play non existing model, error
+            print("Error : Need an existing model to make it play")
+            exit(0)
+    else:
+        print_error()
                 
 
 def print_error():
@@ -59,10 +71,3 @@ def print_error():
 
 if __name__ == "__main__":
     main()
-
-def show_gameplay(qtable_filename):
-    print("aa")
-    g = Game()
-    g.display_gameplay(qtable_filename)
-
-#show_gameplay("models/snake100.npy")

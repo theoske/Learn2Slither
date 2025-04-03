@@ -36,7 +36,7 @@ class Train:
         rewards_per_episode = []
         for episode in range(self.num_episodes):
             if self.is_ui_on:
-                game.display_board(board=self.agent.board.get_board())
+                game.display_board(board=self.agent.get_agent_board())
             if self.is_running is False:
                 exit(0)
             state = self.agent.get_state()
