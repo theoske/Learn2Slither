@@ -2,6 +2,8 @@ from Board import Board
 import pygame
 import cv2
 from Agent import Agent
+from pynput.keyboard import Key, Listener
+import threading
 
 TILE_SIZE = 50
 
@@ -9,7 +11,7 @@ class Game:
     """
         This class is used to play the snake game.
     """
-    def __init__(self):
+    def __init__(self, rate= 0, is_ui_on= False):
         self.board = Board()
         pygame.init()
         self.grass_sprite = 0
@@ -20,6 +22,10 @@ class Game:
         self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
         pygame.display.set_caption('SkibidiSlither')
         self.last_move = -1
+        self.rate = rate
+        self.next_step = False
+        self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
+        self.is_ui_on = is_ui_on
 
     
     def game_loop(self):
@@ -42,7 +48,7 @@ class Game:
                 exit(0)
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    self.board.snake_move_north() #state quand une des 2 pomme verte marche pas a distance pour north et east
+                    self.board.snake_move_north()
                     self.last_move = 2
                 elif event.key == pygame.K_DOWN:
                     self.last_move = 3
@@ -85,8 +91,12 @@ class Game:
             return EMPTY_MOVE_REWARD
         elif self.board.death:
             return DEATH_REWARD
-    
+
     def display_gameplay(self, qtable_filename):
+        """
+            Charge un agent existant.
+            Le fait jouer avec display.
+        """
         self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
         self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
         self.snake_sprite = pygame.image.load("sprites/snake.png").convert_alpha()
@@ -95,6 +105,7 @@ class Game:
         self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
         pygame.display.set_icon(self.head_sprite)
         
+        self.t1.start()
         agent = Agent(exploration_rate=0)
         agent.load_q_table(qtable_filename)
         clock = pygame.time.Clock()
@@ -117,14 +128,38 @@ class Game:
                 print(f"Max length of snake: {max_len}, Duration: {duration}")
                 self.death_screen()
             agent.get_agent_board().update_board()
-            self.display_board(agent.get_agent_board())
+            if self.is_ui_on:
+                self.display_board(agent.get_agent_board())
             if len(agent.get_agent_board().snake_pos) > max_len:
                 max_len = len(agent.get_agent_board().snake_pos)
-            clock.tick(20)
+            while self.rate == 0 and self.next_step is False:
+                pass
+            self.next_step = False
+            if self.rate == 1:
+                clock.tick(60)
         print(f"Max length of snake: {max_len}")
+        self.t1.join()
+    
+    def listen_for_keys(self):
+        def on_release(key):
+            if key == Key.space:
+                self.rate = 0 if self.rate == 2 else self.rate + 1
+                print(f"Rate changed to {self.rate}")
+            elif key == Key.enter:
+                self.next_step = True
+            elif key == Key.esc or self.is_running is False:
+                print("Exiting...")
+                self.is_running = False
+                exit(0)
+
+        with Listener(on_release=on_release) as listener:
+            self.listener = listener
+            listener.join()
+
     def print_action(self, action):
         value_list = ["west", "east", "north", "down"]
         print(value_list[action])
+
     def display_board(self, board= 0):
         if board != 0:
             self.board = board

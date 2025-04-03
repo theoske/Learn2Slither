@@ -3,9 +3,10 @@ import numpy as np
 import threading
 from pynput.keyboard import Key, Listener
 from time import sleep
+from Game import Game
 
 class Train:
-    def __init__(self, num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), rate = 0):
+    def __init__(self, num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), rate = 0, is_ui_on= False):
         self.num_episodes = num_episodes
         self.qtable_filename = qtable_filename
         self.decay = decay
@@ -15,6 +16,7 @@ class Train:
         self.next_step = False
         self.listener = None
         self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
+        self.is_ui_on = is_ui_on
     
     def train(self):
         """
@@ -29,9 +31,12 @@ class Train:
                 1 human readable (5/s)
                 2 computer speed
         """
+        game = Game()
         self.t1.start()
         rewards_per_episode = []
         for episode in range(self.num_episodes):
+            if self.is_ui_on:
+                game.display_board(board=self.agent.board.get_board())
             if self.is_running is False:
                 exit(0)
             state = self.agent.get_state()
