@@ -26,8 +26,9 @@ def main():
     args = parser.parse_args()
     print(f"Number of episodes : {args.sessions}")
     
-    
-    if os.path.isfile(args.modelname):#filename exist
+    rate_map = {"step": 0, "human": 1, "cpu": 2}
+    rate = rate_map.get(args.rate, 0)
+    if os.path.isfile(args.modelname): #filename exist
         if args.mode == "train": #continue training utiliser load_qtable
             agent = Agent()
             agent.load_qtable(args.modelname)
@@ -39,17 +40,16 @@ def main():
                 t.train()
         elif args.mode == "play": #make model play without training it
             if args.ui == "on":
-                g = Game(is_ui_on=True)
+                g = Game(rate=rate, is_ui_on=True)
                 g.display_gameplay(args.modelname)
             else:
-                g = Game(is_ui_on=False)
+                g = Game(rate=rate, is_ui_on=False)
                 g.display_gameplay(args.modelname)
         else:
             print_error()
     elif os.path.isfile(args.modelname) is False: #filename doesnt exist
         if args.mode == "train": #create and train new model
             agent = Agent()
-            rate = int(args.rate)
             if args.rate is None:
                 rate = 0
             if args.sessions > 0:

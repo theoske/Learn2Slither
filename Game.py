@@ -4,6 +4,7 @@ import cv2
 from Agent import Agent
 from pynput.keyboard import Key, Listener
 import threading
+import time
 
 TILE_SIZE = 50
 
@@ -14,11 +15,6 @@ class Game:
     def __init__(self, rate= 0, is_ui_on= False):
         self.board = Board()
         pygame.init()
-        self.grass_sprite = 0
-        self.wall_sprite = 0
-        self.snake_sprite = 0
-        self.red_sprite =  0
-        self.green_sprite = 0
         self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
         pygame.display.set_caption('SkibidiSlither')
         self.last_move = -1
@@ -132,8 +128,8 @@ class Game:
                 self.display_board(agent.get_agent_board())
             if len(agent.get_agent_board().snake_pos) > max_len:
                 max_len = len(agent.get_agent_board().snake_pos)
-            while self.rate == 0 and self.next_step is False:
-                pass
+            while self.rate == 0 and self.next_step is False:#crashes here
+                time.sleep(0.01)
             self.next_step = False
             if self.rate == 1:
                 clock.tick(60)
