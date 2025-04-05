@@ -6,6 +6,8 @@ from time import sleep
 from Display import Display
 import pygame
 
+TILE_SIZE = 50
+
 class Train:
     def __init__(self, num_episodes=1000, qtable_filename = "snake_q_table.npy", decay=0.995, agent= Agent(), rate = 0, is_ui_on= False):
         self.num_episodes = num_episodes
@@ -16,8 +18,11 @@ class Train:
         self.is_running = True
         self.next_step = False
         self.listener = None
-        self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
+        #self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
         self.is_ui_on = is_ui_on
+        pygame.init()
+        self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
+        pygame.display.set_caption('Learn2Slither')
     
     def train(self):
         """
@@ -32,7 +37,10 @@ class Train:
                 1 human readable (5/s)
                 2 computer speed
         """
-        self.t1.start()
+        if self.is_ui_on:
+            self.train_ui()
+            return
+        #self.t1.start()
         rewards_per_episode = []
         for episode in range(self.num_episodes):
             if self.is_running is False:
@@ -73,7 +81,80 @@ class Train:
         self.is_running = False
         self.listener.stop()
         self.agent.save_q_table(self.qtable_filename)
-        self.t1.join()
+        #self.t1.join()
+        return self.agent, rewards_per_episode
+    
+    def train_ui(self):
+        """
+            Copy of train function with ui made with pygame.
+        """
+        self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
+        self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
+        self.snake_sprite = pygame.image.load("sprites/snake.png").convert_alpha()
+        self.head_sprite = pygame.image.load("sprites/head.png").convert_alpha()
+        self.red_sprite = pygame.image.load("sprites/red.png").convert_alpha()
+        self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
+        pygame.display.set_icon(self.head_sprite)
+        
+        # Create a pygame clock object
+        clock = pygame.time.Clock()  # This is the correct way to create a clock
+        
+        rewards_per_episode = []
+        for episode in range(self.num_episodes):
+            self.process_pygame_events()
+            if not self.is_running:
+                break
+            state = self.agent.get_state()
+            episode_reward = 0
+            state_list, action_list, reward_list, next_state_list = [], [], [], []
+            while self.agent.board.death is False:
+                self.process_pygame_events()
+                if not self.is_running:
+                    break
+                    
+                action = self.agent.chose_action(state)
+                print(self.agent.board.get_board())
+                self.agent.last_move = action
+                print(action)
+                next_state, reward, done = self.agent.perform_action(action)
+                self.agent.board.is_eating_apple()
+                if self.agent.board.death is False:
+                    self.agent.board.update_board()
+                self.display_board(self.agent.board.get_board())
+                state = next_state
+                episode_reward += reward
+                state_list.append(state)
+                action_list.append(action)
+                reward_list.append(reward)
+                next_state_list.append(next_state)
+                
+                if self.rate == 0:
+                    self.next_step = False
+                    while self.rate == 0 and not self.next_step:
+                        self.process_pygame_events()
+                        if not self.is_running:
+                            break
+                        clock.tick(30)
+                elif self.rate == 1:
+                    clock.tick(2)
+                else:
+                    clock.tick(120)
+                    
+                self.next_step = False
+                
+            if not self.is_running:
+                break
+                
+            for i in range(len(state_list)):
+                self.agent.update_q_value(state_list[i], action_list[i], reward_list[i], next_state_list[i])
+            self.agent.decay_exploration()
+            rewards_per_episode.append(episode_reward)
+            self.agent.board.resurrect()
+            
+        self.is_running = False
+        if self.listener:
+            self.listener.stop()
+        self.agent.save_q_table(self.qtable_filename)
         return self.agent, rewards_per_episode
     
     def listen_for_keys(self):
@@ -91,3 +172,42 @@ class Train:
         with Listener(on_release=on_release) as listener:
             self.listener = listener
             listener.join()
+    def display_board(self, board):
+        self.screen.fill((0, 0, 0))
+        for y in range(board.shape[0]):
+            for x in range(board.shape[1]):
+                value = board[y, x]
+                if value == 0:
+                    continue
+                elif (value == 1):
+                    sprite = self.snake_sprite
+                elif (value == 2):
+                    sprite = self.red_sprite
+                elif (value == 3):
+                    sprite = self.green_sprite
+                elif (value == 4):
+                    sprite = self.wall_sprite
+                elif (value == 5):
+                    sprite = self.head_sprite
+                if sprite:
+                    pos_x = x * TILE_SIZE
+                    pos_y = y * TILE_SIZE
+                    self.screen.blit(sprite, (pos_x, pos_y))
+        pygame.display.flip()
+    
+    def process_pygame_events(self):
+        """Process Pygame events to keep the window responsive and handle key presses"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.is_running = False
+                return
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.rate = 0 if self.rate == 2 else self.rate + 1
+                    print(f"Rate changed to {self.rate}")
+                elif event.key == pygame.K_RETURN:
+                    self.next_step = True
+                elif event.key == pygame.K_ESCAPE:
+                    print("Exiting...")
+                    self.is_running = False
+                    return

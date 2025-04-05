@@ -54,6 +54,7 @@ def main():
                 rate = 0
             if args.sessions > 0:
                 if (args.ui == "on"):
+                    print("good")
                     t = Train(num_episodes=args.sessions, agent= agent, rate= rate, is_ui_on= True)
                 else:
                     t = Train(num_episodes=args.sessions, agent= agent, rate= rate, is_ui_on= False)
