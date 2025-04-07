@@ -30,7 +30,7 @@ def main():
     if os.path.isfile(args.modelname): #filename exist
         if args.mode == "train": #continue training utiliser load_qtable
             agent = Agent()
-            agent.load_qtable(args.modelname)
+            agent.load_q_table(args.modelname)
             if args.sessions > 0:
                 if args.ui == "on":
                     t = Train(num_episodes=args.sessions, agent= agent, is_ui_on=True)
@@ -54,11 +54,11 @@ def main():
             if args.sessions > 0:
                 if (args.ui == "on"):
                     print("good")
-                    t = Train(num_episodes=args.sessions, agent= agent, rate= rate, is_ui_on= True)
+                    t = Train(num_episodes=args.sessions, qtable_filename=args.modelname, agent= agent, rate= rate, is_ui_on= True)
                 else:
-                    t = Train(num_episodes=args.sessions, agent= agent, rate= rate, is_ui_on= False)
+                    t = Train(num_episodes=args.sessions, qtable_filename=args.modelname, agent= agent, rate= rate, is_ui_on= False)
                 t.train()
-        elif args.mode == "play": #play non existing model, error
+        elif args.mode == "play":
             print("Error : Need an existing model to make it play")
             exit(0)
     else:
