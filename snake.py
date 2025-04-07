@@ -1,5 +1,5 @@
 import argparse
-from Game import Game
+from Play import Play
 from Agent import Agent
 import os.path
 from Train import Train
@@ -24,7 +24,6 @@ def main():
     parser.add_argument("--rate", type=str, help="<step/human/cpu> decides if want to train/play model step-by-step or human readable or computer speed")
 
     args = parser.parse_args()
-    print(f"Number of episodes : {args.sessions}")
     
     rate_map = {"step": 0, "human": 1, "cpu": 2}
     rate = rate_map.get(args.rate, 0)
@@ -40,11 +39,11 @@ def main():
                 t.train()
         elif args.mode == "play": #make model play without training it
             if args.ui == "on":
-                g = Game(rate=rate, is_ui_on=True)
-                g.display_gameplay(args.modelname)
+                g = Play(rate=rate, is_ui_on=True)
+                g.display_gameplay_ui(args.modelname)
             else:
-                g = Game(rate=rate, is_ui_on=False)
-                g.display_gameplay(args.modelname)
+                g = Play(rate=rate, is_ui_on=False)
+                g.display_gameplay_term(args.modelname)
         else:
             print_error()
     elif os.path.isfile(args.modelname) is False: #filename doesnt exist
@@ -72,3 +71,10 @@ def print_error():
 
 if __name__ == "__main__":
     main()
+
+"""
+python3 snake.py --ui on  --modelname testtt.npy --mode train --sessions 100 --rate step
+python3 snake.py --ui off  --modelname testtt.npy --mode train --sessions 100 --rate step
+python3 snake.py --ui on  --modelname models/snake1000.npy --mode play --rate step
+python3 snake.py --ui off  --modelname models/snake1000.npy --mode play --rate step
+"""

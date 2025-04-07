@@ -1,7 +1,5 @@
 from Agent import Agent
 import numpy as np
-import threading
-from pynput.keyboard import Key, Listener
 from time import sleep
 from Display import Display
 import pygame
@@ -17,8 +15,6 @@ class Train:
         self.rate = rate
         self.is_running = True
         self.next_step = False
-        self.listener = None
-        #self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
         self.is_ui_on = is_ui_on
         pygame.init()
         self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
@@ -34,13 +30,12 @@ class Train:
         - num_episodes: Number of training episodes
 
         rate:   0 step-by-step
-                1 human readable (5/s)
+                1 human readable
                 2 computer speed
         """
         if self.is_ui_on:
             self.train_ui()
             return
-        #self.t1.start()
         rewards_per_episode = []
         for episode in range(self.num_episodes):
             if self.is_running is False:
@@ -79,9 +74,7 @@ class Train:
             self.agent.board.resurrect()
             
         self.is_running = False
-        self.listener.stop()
         self.agent.save_q_table(self.qtable_filename)
-        #self.t1.join()
         return self.agent, rewards_per_episode
     
     def train_ui(self):
@@ -96,8 +89,7 @@ class Train:
         self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
         pygame.display.set_icon(self.head_sprite)
         
-        # Create a pygame clock object
-        clock = pygame.time.Clock()  # This is the correct way to create a clock
+        clock = pygame.time.Clock()
         
         rewards_per_episode = []
         for episode in range(self.num_episodes):
@@ -111,7 +103,6 @@ class Train:
                 self.process_pygame_events()
                 if not self.is_running:
                     break
-                    
                 action = self.agent.chose_action(state)
                 print(self.agent.board.get_board())
                 self.agent.last_move = action
@@ -152,26 +143,9 @@ class Train:
             self.agent.board.resurrect()
             
         self.is_running = False
-        if self.listener:
-            self.listener.stop()
         self.agent.save_q_table(self.qtable_filename)
         return self.agent, rewards_per_episode
-    
-    def listen_for_keys(self):
-        def on_release(key):
-            if key == Key.space:
-                self.rate = 0 if self.rate == 2 else self.rate + 1
-                print(f"Rate changed to {self.rate}")
-            elif key == Key.enter:
-                self.next_step = True
-            elif key == Key.esc or self.is_running is False:
-                print("Exiting...")
-                self.is_running = False
-                exit(0)
 
-        with Listener(on_release=on_release) as listener:
-            self.listener = listener
-            listener.join()
     def display_board(self, board):
         self.screen.fill((0, 0, 0))
         for y in range(board.shape[0]):

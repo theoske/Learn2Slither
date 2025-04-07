@@ -2,26 +2,32 @@ from Board import Board
 import pygame
 import cv2
 from Agent import Agent
-from pynput.keyboard import Key, Listener
 import threading
-import time
+from pynput.keyboard import Key, Listener
+from time import sleep
 
 TILE_SIZE = 50
 
-class Game:
+class Play:
     """
         This class is used to play the snake game.
     """
     def __init__(self, rate= 0, is_ui_on= False):
         self.board = Board()
-        pygame.init()
-        self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
-        pygame.display.set_caption('SkibidiSlither')
+        if is_ui_on:
+            pygame.init()
+            self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
+            pygame.display.set_caption('SkibidiSlither')
+        else:
+            self.t1 = threading.Thread(target=self.listen_for_keys, daemon=True)
+            self.listener = None
         self.last_move = -1
         self.rate = rate
         self.next_step = False
-        self.t1 = threading.Thread(target= self.listen_for_keys, daemon= True)
         self.is_ui_on = is_ui_on
+        self.is_running = True
+        self.max_len = 0
+        self.duration = 0
 
     
     def game_loop(self):
@@ -34,8 +40,6 @@ class Game:
         pygame.display.set_icon(self.head_sprite)
         pygame.mixer.init()
         pygame.mixer.music.load('sprites/game_soundtrack.mp3')
-        if not self.setup_camera_background():
-            exit(0)
         while True:
             if pygame.mixer.music.get_busy() is False:
                 pygame.mixer.music.play(-1, 0.0)
@@ -88,10 +92,10 @@ class Game:
         elif self.board.death:
             return DEATH_REWARD
 
-    def display_gameplay(self, qtable_filename):
+    def display_gameplay_ui(self, qtable_filename):
         """
-            Charge un agent existant.
-            Le fait jouer avec display.
+            Loads an existing model.
+            Plays it with a GUI in a pygame window.
         """
         self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
         self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
@@ -99,20 +103,16 @@ class Game:
         self.head_sprite = pygame.image.load("sprites/head.png").convert_alpha()
         self.red_sprite =  pygame.image.load("sprites/red.png").convert_alpha()
         self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
-        pygame.display.set_icon(self.head_sprite)
         
-        self.t1.start()
         agent = Agent(exploration_rate=0)
         agent.load_q_table(qtable_filename)
         clock = pygame.time.Clock()
-        max_len = 0
-        duration = 0
         running = True
         while running is True:
-            duration += 1
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
+            self.process_pygame_events()
+            if not self.is_running:
+                break
+            self.duration += 1
             state = agent.get_state()
             action = agent.chose_action(state)
             print(agent.get_agent_board().get_agent_vision())
@@ -121,19 +121,57 @@ class Game:
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
             if agent.get_agent_board().death:
-                print(f"Max length of snake: {max_len}, Duration: {duration}")
+                print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
                 self.death_screen()
             agent.get_agent_board().update_board()
-            if self.is_ui_on:
-                self.display_board(agent.get_agent_board())
-            if len(agent.get_agent_board().snake_pos) > max_len:
-                max_len = len(agent.get_agent_board().snake_pos)
-            while self.rate == 0 and self.next_step is False:#crashes here
-                time.sleep(0.01)
+            self.display_board(agent.get_agent_board())
+            if len(agent.get_agent_board().snake_pos) > self.max_len:
+                self.max_len = len(agent.get_agent_board().snake_pos)
+            while self.rate == 0 and not self.next_step:
+                self.process_pygame_events()
+                if not self.is_running:
+                    break
+                clock.tick(30)
             self.next_step = False
             if self.rate == 1:
-                clock.tick(60)
-        print(f"Max length of snake: {max_len}")
+                clock.tick(2)
+            elif self.rate == 2:
+                clock.tick(120)
+    
+    def display_gameplay_term(self, qtable_filename):
+        """
+            Loads an existing model.
+            Plays it in the terminal.
+        """
+        agent = Agent(exploration_rate=0)
+        agent.load_q_table(qtable_filename)
+        running = True
+        self.t1.start()
+        while running is True:
+            if not self.is_running:
+                break
+            self.duration += 1
+            state = agent.get_state()
+            action = agent.chose_action(state)
+            print(agent.get_agent_board().get_board())
+            print(state)
+            self.print_action(action)
+            agent.perform_action(action)
+            agent.get_agent_board().is_eating_apple()
+            if agent.get_agent_board().death:
+                print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
+                break
+            agent.get_agent_board().update_board()
+            if len(agent.get_agent_board().snake_pos) > self.max_len:
+                self.max_len = len(agent.get_agent_board().snake_pos)
+            while self.rate == 0 and not self.next_step:
+                if not self.is_running:
+                    break
+                sleep(0.01)
+            self.next_step = False
+            if self.rate == 1:
+                sleep(1.5)
+        self.listener.stop()
         self.t1.join()
     
     def listen_for_keys(self):
@@ -145,8 +183,9 @@ class Game:
                 self.next_step = True
             elif key == Key.esc or self.is_running is False:
                 print("Exiting...")
+                print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
                 self.is_running = False
-                exit(0)
+                return
 
         with Listener(on_release=on_release) as listener:
             self.listener = listener
@@ -158,7 +197,7 @@ class Game:
 
     def display_board(self, board= 0):
         if isinstance(board, int) is False:
-            self.board = board #cette board est larray np et pas la classe
+            self.board = board
         self.screen.fill((0, 0, 0))
         for y in range(self.board.board.shape[0]):
             for x in range(self.board.board.shape[1]):
@@ -217,9 +256,27 @@ class Game:
         frame = cv2.resize(frame, (self.screen.get_width(), self.screen.get_height()))
         camera_surface = pygame.surfarray.make_surface(frame)
         return camera_surface
+    
+    def process_pygame_events(self):
+        """Process Pygame events to keep the window responsive and handle key presses"""
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.is_running = False
+                return
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    self.rate = 0 if self.rate == 2 else self.rate + 1
+                    print(f"Rate changed to {self.rate}")
+                elif event.key == pygame.K_RETURN:
+                    self.next_step = True
+                elif event.key == pygame.K_ESCAPE:
+                    print("Exiting...")
+                    print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
+                    self.is_running = False
+                    return
 
 
     
     
-#g = Game()
+#g = Play()
 #g.game_loop()
