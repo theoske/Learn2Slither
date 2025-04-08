@@ -30,7 +30,7 @@ def main():
     if os.path.isfile(args.modelname): #filename exist
         if args.mode == "train": #continue training utiliser load_qtable
             agent = Agent()
-            agent.load_q_table(args.modelname)
+            agent.load_q_table(args.modelname)# tester en entrainant un model 500x puis 1 fois
             if args.sessions > 0:
                 if args.ui == "on":
                     t = Train(num_episodes=args.sessions, agent= agent, is_ui_on=True)

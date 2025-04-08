@@ -17,10 +17,10 @@ class Play:
         if is_ui_on:
             pygame.init()
             self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
-            pygame.display.set_caption('SkibidiSlither')
+            pygame.display.set_caption('Learn2Slither')
         else:
-            self.t1 = threading.Thread(target=self.listen_for_keys, daemon=True)
             self.listener = None
+            self.t1 = threading.Thread(target=self.listen_for_keys, daemon=True)
         self.last_move = -1
         self.rate = rate
         self.next_step = False
@@ -148,6 +148,7 @@ class Play:
         running = True
         self.t1.start()
         while running is True:
+            print(self.listener)
             if not self.is_running:
                 break
             self.duration += 1
@@ -171,6 +172,10 @@ class Play:
             self.next_step = False
             if self.rate == 1:
                 sleep(1.5)
+        self.is_running = False
+        while not self.listener:
+            pass
+        print(self.listener)
         self.listener.stop()
         self.t1.join()
     
@@ -181,7 +186,7 @@ class Play:
                 print(f"Rate changed to {self.rate}")
             elif key == Key.enter:
                 self.next_step = True
-            elif key == Key.esc or self.is_running is False:
+            elif key == Key.esc or not self.is_running:
                 print("Exiting...")
                 print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
                 self.is_running = False

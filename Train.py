@@ -68,7 +68,6 @@ class Train:
                 next_state_list.append(next_state)
                 while self.rate == 0 and self.next_step is False:
                     if self.is_running is False:
-                        print("000000")
                         break
                     sleep(0.01)
                 if self.rate == 1:
