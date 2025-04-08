@@ -78,6 +78,8 @@ class Train:
             self.agent.decay_exploration()
             rewards_per_episode.append(episode_reward)
             self.agent.board.resurrect()
+        while not self.listener:
+            pass
         self.listener.stop()
         self.t1.join()
         self.agent.save_q_table(self.qtable_filename)

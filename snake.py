@@ -33,9 +33,9 @@ def main():
             agent.load_q_table(args.modelname)# tester en entrainant un model 500x puis 1 fois
             if args.sessions > 0:
                 if args.ui == "on":
-                    t = Train(num_episodes=args.sessions, agent= agent, is_ui_on=True)
+                    t = Train(num_episodes=args.sessions, qtable_filename=args.modelname, agent= agent, rate= rate, is_ui_on= True)
                 else:
-                    t = Train(num_episodes=args.sessions, agent= agent, is_ui_on=False)
+                    t = Train(num_episodes=args.sessions, qtable_filename=args.modelname, agent= agent, rate= rate, is_ui_on= False)
                 t.train()
         elif args.mode == "play": #make model play without training it
             if args.ui == "on":
@@ -74,7 +74,7 @@ if __name__ == "__main__":
 
 """
 python3 snake.py --ui on  --modelname testtt.npy --mode train --sessions 100 --rate step
-python3 snake.py --ui off  --modelname testtt.npy --mode train --sessions 100 --rate step
-python3 snake.py --ui on  --modelname models/snake1000.npy --mode play --rate step
-python3 snake.py --ui off  --modelname models/snake1000.npy --mode play --rate step
+python3 snake.py --ui off  --modelname testtt.npy --mode train --sessions 1000 --rate step
+python3 snake.py --ui on  --modelname testtt.npy --mode play --rate step
+python3 snake.py --ui off  --modelname testtt.npy --mode play --rate cpu
 """

@@ -148,7 +148,6 @@ class Play:
         running = True
         self.t1.start()
         while running is True:
-            print(self.listener)
             if not self.is_running:
                 break
             self.duration += 1
@@ -175,7 +174,6 @@ class Play:
         self.is_running = False
         while not self.listener:
             pass
-        print(self.listener)
         self.listener.stop()
         self.t1.join()
     
