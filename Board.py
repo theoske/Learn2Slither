@@ -64,7 +64,6 @@ class Board:
         if self.is_move_legal("east") is False:
             self.death = True
             return
-
         for i in range(len(self.snake_pos) - 1, -1, -1):
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]

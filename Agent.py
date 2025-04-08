@@ -6,9 +6,6 @@ import os
 
 
 class Agent:
-    """
-        The agent can only take 4 decisions (up/down/left/right).
-    """
     def __init__(self, action_size=4, learning_rate=0.5, discount_factor=0.95,
                  exploration_rate=1.0, exploration_decay=0.95,
                  min_exploration_rate=0.1):
@@ -49,18 +46,12 @@ class Agent:
             return EMPTY_MOVE_REWARD
 
     def get_q_value(self, state, action):
-        """Get Q-value for a state-action pair"""
-        # Use state directly if it's already a tuple
         state_key = state if isinstance(state, tuple) else tuple(state)
-
-        # If state not in Q-table, add it with zeros for all actions
         if state_key not in self.q_table:
             self.q_table[state_key] = np.zeros(self.action_size)
-
         return self.q_table[state_key][action]
 
     def update_q_value(self, state, action, reward, next_state):
-        """Update Q-value using the Q-learning formula"""
         if isinstance(state, np.ndarray):
             state_tuple = tuple(map(tuple, state))
         else:
@@ -69,45 +60,32 @@ class Agent:
             next_state_tuple = tuple(map(tuple, next_state))
         else:
             tuple(next_state)
-        # If states not in Q-table, add them
         if state_tuple not in self.q_table:
             self.q_table[state_tuple] = np.zeros(self.action_size)
         if next_state_tuple not in self.q_table:
             self.q_table[next_state_tuple] = np.zeros(self.action_size)
-
-        # Calculate the best future value
         best_future_value = np.max(self.q_table[next_state_tuple])
-
-        # Current Q-value
         current_q = self.q_table[state_tuple][action]
-
         # Calculate new Q-value using the Q-learning formula
         # Q(s,a) = Q(s,a) + α * [R + γ * max(Q(s',a')) - Q(s,a)]
         new_q = current_q + self.learning_rate * \
             (reward + self.discount_factor * best_future_value - current_q)
 
-        # Update Q-table
         self.q_table[state_tuple][action] = new_q
 
     def chose_action(self, state):
         """chose action using epsilon-greedy policy"""
-        # Convert state to a hashable tuple if it's not already
         if isinstance(state, np.ndarray):
             state_key = tuple(state.flatten())
         elif isinstance(state, tuple):
-            # If it's a tuple containing numpy arrays, convert them to tuples
             state_key = tuple(tuple(x) if isinstance(x, np.ndarray)
                               else x for x in state)
         else:
             state_key = state
-
         if state_key not in self.q_table:
             self.q_table[state_key] = np.zeros(self.action_size)
-
-        # Exploration: chose a random action
         if random.random() < self.exploration_rate:
             return random.randint(0, self.action_size - 1)
-        # Exploitation: chose the action with highest Q-value
         else:
             return np.argmax(self.q_table[state_key])
 

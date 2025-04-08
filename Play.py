@@ -1,6 +1,5 @@
 from Board import Board
 import pygame
-import cv2
 from Agent import Agent
 import threading
 from pynput.keyboard import Key, Listener
@@ -37,45 +36,6 @@ class Play:
         self.is_running = True
         self.max_len = 0
         self.duration = 0
-
-    def game_loop(self):
-        self.wall_sprite = pygame.image.load(wall).convert_alpha()
-        self.snake_sprite = pygame.image.load(s).convert_alpha()
-        self.head_sprite = pygame.image.load(head).convert_alpha()
-        self.red_sprite = pygame.image.load(red).convert_alpha()
-        self.green_sprite = pygame.image.load(green).convert_alpha()
-        pygame.display.set_icon(self.head_sprite)
-        pygame.mixer.init()
-        pygame.mixer.music.load('sprites/game_soundtrack.mp3')
-        while True:
-            if pygame.mixer.music.get_busy() is False:
-                pygame.mixer.music.play(-1, 0.0)
-            event = pygame.event.wait()
-            if event.type == pygame.QUIT:
-                exit(0)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_UP:
-                    self.board.snake_move_north()
-                    self.last_move = 2
-                elif event.key == pygame.K_DOWN:
-                    self.last_move = 3
-                    self.board.snake_move_south()
-                elif event.key == pygame.K_LEFT:
-                    self.board.snake_move_west()
-                    self.last_move = 0
-                elif event.key == pygame.K_RIGHT:
-                    self.board.snake_move_east()
-                    self.last_move = 1
-                elif event.key == pygame.K_ESCAPE:
-                    exit(0)
-            self.state = self.get_state()
-            print(self.state)
-            print(self.get_reward())
-            self.board.is_eating_apple()
-            if self.board.death:
-                self.death_screen()
-            self.board.update_board()
-            self.display_board()
 
     def get_reward(self):
         GREEN_APPLE_REWARD = 50
@@ -247,28 +207,6 @@ class Play:
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     exit(0)
-                elif event.key == pygame.K_RETURN:
-                    self.board.resurrect()
-                    self.game_loop()
-
-    def setup_camera_background(self):
-        self.camera = cv2.VideoCapture(0)
-        if not self.camera.isOpened():
-            print("Error: Could not open camera.")
-            return False
-        return True
-
-    def update_camera_background(self):
-        ret, frame = self.camera.read()
-        if not ret:
-            print("Error: Failed to capture image")
-            return None
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
-        frame = cv2.resize(frame, (self.screen.get_width(),
-                                   self.screen.get_height()))
-        camera_surface = pygame.surfarray.make_surface(frame)
-        return camera_surface
 
     def process_pygame_events(self):
         for event in pygame.event.get():
