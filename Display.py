@@ -1,32 +1,38 @@
 import pygame
-import numpy as np
-from Board import Board
 import threading
 from time import sleep
 
 TILE_SIZE = 50
+title = "Learn2Slither"
+wall = "sprites/wall.png"
+s = "sprites/snake.png"
+head = "sprites/head.png"
+red = "sprites/red.png"
+green = "sprites/green.png"
+
 
 class Display:
     """
-        display_board runs in another thread and display the self.board constantly.
+        display_board runs in another thread and
+        display the self.board constantly.
         When set_board is called the board is updated.
     """
-    def __init__(self, board= 0):
+    def __init__(self, board=0):
         pygame.init()
         self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
-        pygame.display.set_caption("Learn2Slither")
-        self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
-        self.snake_sprite = pygame.image.load("sprites/snake.png").convert_alpha()
-        self.head_sprite = pygame.image.load("sprites/head.png").convert_alpha()
-        self.red_sprite =  pygame.image.load("sprites/red.png").convert_alpha()
-        self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
+        pygame.display.set_caption(title)
+        self.wall_sprite = pygame.image.load(wall).convert_alpha()
+        self.snake_sprite = pygame.image.load(s).convert_alpha()
+        self.head_sprite = pygame.image.load(head).convert_alpha()
+        self.red_sprite = pygame.image.load(red).convert_alpha()
+        self.green_sprite = pygame.image.load(green).convert_alpha()
         pygame.display.set_icon(self.head_sprite)
-        self.t1 = threading.Thread(target= self.display_main, daemon= True)
+        self.t1 = threading.Thread(target=self.display_main, daemon=True)
         self.board = board
-    
+
     def set_board(self, new_board):
         self.board = new_board
-    
+
     def display_main(self):
         running = True
         while running:
@@ -38,7 +44,7 @@ class Display:
             sleep(0.01)
         if running is False:
             pygame.quit()
-    
+
     def display_board(self, board):
         self.screen.fill((0, 0, 0))
         for y in range(board.shape[0]):
@@ -61,16 +67,3 @@ class Display:
                     pos_y = y * TILE_SIZE
                     self.screen.blit(sprite, (pos_x, pos_y))
         pygame.display.flip()
-"""
-b = Board()
-disp = Display()
-disp.display_board(b.board)
-
-running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-pygame.quit()
-"""
