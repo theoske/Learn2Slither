@@ -16,7 +16,7 @@ green = "sprites/green.png"
 
 class Play:
     """
-        This class is used to play the snake game.
+        This class makes an existing agent play.
     """
     def __init__(self, rate=0, is_ui_on=False):
         self.board = Board()
