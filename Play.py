@@ -7,20 +7,29 @@ from pynput.keyboard import Key, Listener
 from time import sleep
 
 TILE_SIZE = 50
+title = "Learn2Slither"
+wall = "sprites/wall.png"
+s = "sprites/snake.png"
+head = "sprites/head.png"
+red = "sprites/red.png"
+green = "sprites/green.png"
+
 
 class Play:
     """
         This class is used to play the snake game.
     """
-    def __init__(self, rate= 0, is_ui_on= False):
+    def __init__(self, rate=0, is_ui_on=False):
         self.board = Board()
         if is_ui_on:
             pygame.init()
-            self.screen = pygame.display.set_mode((TILE_SIZE * 12, TILE_SIZE * 12))
+            self.screen = pygame.display.set_mode((TILE_SIZE * 12,
+                                                   TILE_SIZE * 12))
             pygame.display.set_caption('Learn2Slither')
         else:
             self.listener = None
-            self.t1 = threading.Thread(target=self.listen_for_keys, daemon=True)
+            self.t1 = threading.Thread(target=self.listen_for_keys,
+                                       daemon=True)
         self.last_move = -1
         self.rate = rate
         self.next_step = False
@@ -29,14 +38,12 @@ class Play:
         self.max_len = 0
         self.duration = 0
 
-    
     def game_loop(self):
-        self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
-        self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
-        self.snake_sprite = pygame.image.load("sprites/snake.png").convert_alpha()
-        self.head_sprite = pygame.image.load("sprites/head.png").convert_alpha()
-        self.red_sprite =  pygame.image.load("sprites/red.png").convert_alpha()
-        self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
+        self.wall_sprite = pygame.image.load(wall).convert_alpha()
+        self.snake_sprite = pygame.image.load(s).convert_alpha()
+        self.head_sprite = pygame.image.load(head).convert_alpha()
+        self.red_sprite = pygame.image.load(red).convert_alpha()
+        self.green_sprite = pygame.image.load(green).convert_alpha()
         pygame.display.set_icon(self.head_sprite)
         pygame.mixer.init()
         pygame.mixer.music.load('sprites/game_soundtrack.mp3')
@@ -69,7 +76,7 @@ class Play:
                 self.death_screen()
             self.board.update_board()
             self.display_board()
-    
+
     def get_reward(self):
         GREEN_APPLE_REWARD = 50
         RED_APPLE_REWARD = -10
@@ -97,13 +104,12 @@ class Play:
             Loads an existing model.
             Plays it with a GUI in a pygame window.
         """
-        self.grass_sprite = pygame.image.load("sprites/grass.png").convert_alpha()
-        self.wall_sprite = pygame.image.load("sprites/wall.png").convert_alpha()
-        self.snake_sprite = pygame.image.load("sprites/snake.png").convert_alpha()
-        self.head_sprite = pygame.image.load("sprites/head.png").convert_alpha()
-        self.red_sprite =  pygame.image.load("sprites/red.png").convert_alpha()
-        self.green_sprite = pygame.image.load("sprites/green.png").convert_alpha()
-        
+        self.wall_sprite = pygame.image.load(wall).convert_alpha()
+        self.snake_sprite = pygame.image.load(s).convert_alpha()
+        self.head_sprite = pygame.image.load(head).convert_alpha()
+        self.red_sprite = pygame.image.load(red).convert_alpha()
+        self.green_sprite = pygame.image.load(green).convert_alpha()
+
         agent = Agent(exploration_rate=0)
         agent.load_q_table(qtable_filename)
         clock = pygame.time.Clock()
@@ -121,7 +127,8 @@ class Play:
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
             if agent.get_agent_board().death:
-                print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
+                print(f"Max length of snake: {self.max_len},\
+                       Duration: {self.duration}")
                 self.death_screen()
             agent.get_agent_board().update_board()
             self.display_board(agent.get_agent_board())
@@ -137,7 +144,7 @@ class Play:
                 clock.tick(2)
             elif self.rate == 2:
                 clock.tick(120)
-    
+
     def display_gameplay_term(self, qtable_filename):
         """
             Loads an existing model.
@@ -159,7 +166,8 @@ class Play:
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
             if agent.get_agent_board().death:
-                print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
+                print(f"Max length of snake: {self.max_len}, \
+                      Duration: {self.duration}")
                 break
             agent.get_agent_board().update_board()
             if len(agent.get_agent_board().snake_pos) > self.max_len:
@@ -176,7 +184,7 @@ class Play:
             pass
         self.listener.stop()
         self.t1.join()
-    
+
     def listen_for_keys(self):
         def on_release(key):
             if key == Key.space:
@@ -186,7 +194,8 @@ class Play:
                 self.next_step = True
             elif key == Key.esc or not self.is_running:
                 print("Exiting...")
-                print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
+                print(f"Max length of snake: {self.max_len}, \
+                      Duration: {self.duration}")
                 self.is_running = False
                 return
 
@@ -198,7 +207,7 @@ class Play:
         value_list = ["west", "east", "north", "down"]
         print(value_list[action])
 
-    def display_board(self, board= 0):
+    def display_board(self, board=0):
         if isinstance(board, int) is False:
             self.board = board
         self.screen.fill((0, 0, 0))
@@ -241,27 +250,27 @@ class Play:
                 elif event.key == pygame.K_RETURN:
                     self.board.resurrect()
                     self.game_loop()
-            
+
     def setup_camera_background(self):
         self.camera = cv2.VideoCapture(0)
         if not self.camera.isOpened():
             print("Error: Could not open camera.")
             return False
         return True
-    
+
     def update_camera_background(self):
         ret, frame = self.camera.read()
         if not ret:
             print("Error: Failed to capture image")
             return None
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE) 
-        frame = cv2.resize(frame, (self.screen.get_width(), self.screen.get_height()))
+        frame = cv2.rotate(frame, cv2.ROTATE_90_COUNTERCLOCKWISE)
+        frame = cv2.resize(frame, (self.screen.get_width(),
+                                   self.screen.get_height()))
         camera_surface = pygame.surfarray.make_surface(frame)
         return camera_surface
-    
+
     def process_pygame_events(self):
-        """Process Pygame events to keep the window responsive and handle key presses"""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.is_running = False
@@ -274,12 +283,7 @@ class Play:
                     self.next_step = True
                 elif event.key == pygame.K_ESCAPE:
                     print("Exiting...")
-                    print(f"Max length of snake: {self.max_len}, Duration: {self.duration}")
+                    print(f"Max length of snake: {self.max_len},\
+                          Duration: {self.duration}")
                     self.is_running = False
                     return
-
-
-    
-    
-#g = Play()
-#g.game_loop()
