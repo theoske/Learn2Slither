@@ -27,11 +27,14 @@ class Board:
     def gen_board(self):
         while (self.red_pos in self.snake_pos):
             self.red_pos = self.random_apple_pos()
-        while (self.green1_pos in self.snake_pos or self.red_pos == self.green1_pos):
+        while (self.green1_pos in self.snake_pos or
+               self.red_pos == self.green1_pos):
             self.green1_pos = self.random_apple_pos()
-        while (self.green2_pos in self.snake_pos or self.green2_pos == self.green1_pos or self.red_pos == self.green2_pos):
+        while (self.green2_pos in self.snake_pos or
+               self.green2_pos == self.green1_pos or
+               self.red_pos == self.green2_pos):
             self.green2_pos = self.random_apple_pos()
-        
+
         self.board[self.snake_pos[0]] = 5
         self.board[self.snake_pos[1]] = 1
         self.board[self.snake_pos[2]] = 1
@@ -50,7 +53,7 @@ class Board:
         x = randint(1, 10)
         y = randint(1, 10)
         return (y, x)
-    
+
     def put_wall(self):
         self.board[0, :] = 4
         self.board[11, :] = 4
@@ -61,12 +64,13 @@ class Board:
         if self.is_move_legal("east") is False:
             self.death = True
             return
-        
+
         for i in range(len(self.snake_pos) - 1, -1, -1):
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
             else:
-                self.snake_pos[0] = (self.snake_pos[0][0], self.snake_pos[0][1] + 1)
+                self.snake_pos[0] = (self.snake_pos[0][0],
+                                     self.snake_pos[0][1] + 1)
 
     def snake_move_west(self):
         if self.is_move_legal("west") is False:
@@ -76,8 +80,9 @@ class Board:
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
             else:
-                self.snake_pos[0] = (self.snake_pos[0][0], self.snake_pos[0][1] - 1)
-    
+                self.snake_pos[0] = (self.snake_pos[0][0],
+                                     self.snake_pos[0][1] - 1)
+
     def snake_move_north(self):
         if self.is_move_legal("north") is False:
             self.death = True
@@ -86,7 +91,8 @@ class Board:
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
             else:
-                self.snake_pos[0] = (self.snake_pos[0][0] - 1, self.snake_pos[0][1])
+                self.snake_pos[0] = (self.snake_pos[0][0] - 1,
+                                     self.snake_pos[0][1])
 
     def snake_move_south(self):
         if self.is_move_legal("south") is False:
@@ -96,7 +102,8 @@ class Board:
             if i != 0:
                 self.snake_pos[i] = self.snake_pos[i-1]
             else:
-                self.snake_pos[0] = (self.snake_pos[0][0] + 1, self.snake_pos[0][1])
+                self.snake_pos[0] = (self.snake_pos[0][0] + 1,
+                                     self.snake_pos[0][1])
 
     def is_move_legal(self, move_name):
         head = self.snake_pos[0]
@@ -115,7 +122,7 @@ class Board:
         if self.board[future_pos] in forbiden_collision_list:
             return False
         return True
-    
+
     def update_board(self):
         self.board[1:11, 1:11] = 0
         for i in range(len(self.snake_pos)):
@@ -124,7 +131,7 @@ class Board:
         self.board[self.red_pos] = 2
         self.board[self.green1_pos] = 3
         self.board[self.green2_pos] = 3
-    
+
     def get_board(self):
         return self.board
 
@@ -145,15 +152,21 @@ class Board:
             self.respawn_red()
 
     def respawn_green1(self):
-        while (self.green1_pos in self.snake_pos or self.green1_pos == self.green2_pos or self.green1_pos == self.red_pos):
+        while (self.green1_pos in self.snake_pos or
+               self.green1_pos == self.green2_pos or
+               self.green1_pos == self.red_pos):
             self.green1_pos = self.random_apple_pos()
-    
+
     def respawn_green2(self):
-        while (self.green2_pos in self.snake_pos or self.green2_pos == self.green1_pos or self.red_pos == self.green2_pos):
+        while (self.green2_pos in self.snake_pos or
+               self.green2_pos == self.green1_pos or
+               self.red_pos == self.green2_pos):
             self.green2_pos = self.random_apple_pos()
-    
+
     def respawn_red(self):
-        while (self.red_pos in self.snake_pos or self.red_pos == self.green1_pos or self.red_pos == self.green2_pos):
+        while (self.red_pos in self.snake_pos or
+               self.red_pos == self.green1_pos or
+               self.red_pos == self.green2_pos):
             self.red_pos = self.random_apple_pos()
 
     def reduce_snake(self):
@@ -161,18 +174,16 @@ class Board:
         if len(self.snake_pos) == 0:
             self.death = True
             return
-    
+
     def augment_snake(self):
         tail = self.snake_pos[-1]
         self.snake_pos.append(tail)
-    
+
     def get_agent_vision(self):
         """
             The agent only sees the column and the row of the snakes head.
-            So this function returns a board with all the unseen tiles set as -1.
+            Tiles not visible to the snake set as -1.
             return (row, column)
         """
         head_pos = self.snake_pos[0]
         return (self.board[head_pos[0], :], self.board[:, head_pos[1]])
-
-        
