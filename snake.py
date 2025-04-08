@@ -76,5 +76,5 @@ if __name__ == "__main__":
 python3 snake.py --ui on  --modelname testtt.npy --mode train --sessions 100 --rate step
 python3 snake.py --ui off  --modelname testtt.npy --mode train --sessions 1000 --rate step
 python3 snake.py --ui on  --modelname testtt.npy --mode play --rate step
-python3 snake.py --ui off  --modelname testtt.npy --mode play --rate cpu
+python3 snake.py --ui off  --modelname void.npy --mode play --rate cpu
 """

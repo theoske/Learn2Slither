@@ -1,6 +1,8 @@
 import numpy as np
 from Board import Board
 import random
+import pickle
+import os
 
 class Agent:
     """
@@ -105,15 +107,14 @@ class Agent:
     
     def save_q_table(self, filename):
         """Save Q-table to file using pickle instead of numpy.save"""
-        import pickle
         with open(filename, 'wb') as f:
             pickle.dump(self.q_table, f)
     
     def load_q_table(self, filename):
         """Load Q-table from file using pickle instead of numpy.load"""
-        import pickle
-        with open(filename, 'rb') as f:
-            self.q_table = pickle.load(f)
+        if os.path.getsize(filename) > 0:
+            with open(filename, 'rb') as f:
+                self.q_table = pickle.load(f)
     
     def get_state(self):
             """
