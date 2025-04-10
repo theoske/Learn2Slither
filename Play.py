@@ -18,7 +18,7 @@ class Play:
     """
         This class makes an existing agent play.
     """
-    def __init__(self, rate=0, is_ui_on=False):
+    def __init__(self, rate=0, is_ui_on=False, multi_sess=False):
         self.board = Board()
         if is_ui_on:
             pygame.init()
@@ -36,6 +36,7 @@ class Play:
         self.is_running = True
         self.max_len = 0
         self.duration = 0
+        self.multi_sess = multi_sess
 
     def get_reward(self):
         GREEN_APPLE_REWARD = 50
@@ -64,6 +65,9 @@ class Play:
             Loads an existing model.
             Plays it with a GUI in a pygame window.
         """
+        if not self.is_ui_on:
+            self.display_gameplay_term(qtable_filename)
+            return
         self.wall_sprite = pygame.image.load(wall).convert_alpha()
         self.snake_sprite = pygame.image.load(s).convert_alpha()
         self.head_sprite = pygame.image.load(head).convert_alpha()
@@ -89,7 +93,7 @@ class Play:
             if agent.get_agent_board().death:
                 print(f"Max length of snake: {self.max_len},\
                        Duration: {self.duration}")
-                self.death_screen()
+                break
             agent.get_agent_board().update_board()
             self.display_board(agent.get_agent_board())
             if len(agent.get_agent_board().snake_pos) > self.max_len:
@@ -113,6 +117,9 @@ class Play:
         agent = Agent(exploration_rate=0)
         agent.load_q_table(qtable_filename)
         running = True
+        self.duration = 0
+        self.max_len = 0
+        self.last_move = -1
         self.t1.start()
         while running is True:
             if not self.is_running:
@@ -120,14 +127,16 @@ class Play:
             self.duration += 1
             state = agent.get_state()
             action = agent.chose_action(state)
-            print(agent.get_agent_board().get_board())
-            print(state)
-            self.print_action(action)
+            if not self.multi_sess:
+                print(agent.get_agent_board().get_board())
+                print(state)
+                self.print_action(action)
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
-            if agent.get_agent_board().death:
-                print(f"Max length of snake: {self.max_len}, \
-                      Duration: {self.duration}")
+            if agent.get_agent_board().death or self.duration > 2500 or (self.duration > 500 and self.max_len < 6):
+                if not self.multi_sess:
+                    print(f"Max length of snake: {self.max_len}, \
+                        Duration: {self.duration}")
                 break
             agent.get_agent_board().update_board()
             if len(agent.get_agent_board().snake_pos) > self.max_len:
@@ -144,6 +153,7 @@ class Play:
             pass
         self.listener.stop()
         self.t1.join()
+        return self.max_len, self.duration
 
     def listen_for_keys(self):
         def on_release(key):
@@ -191,22 +201,6 @@ class Play:
                     pos_y = y * TILE_SIZE
                     self.screen.blit(sprite, (pos_x, pos_y))
         pygame.display.flip()
-
-    def death_screen(self):
-        self.screen.fill((0, 0, 0))
-        deathscreen = pygame.image.load("sprites/deathscreen.png").convert()
-        pygame.mixer.music.load('sprites/death_soundtrack.mp3')
-        self.screen.blit(deathscreen, (0, 0))
-        pygame.display.flip()
-        while True:
-            if pygame.mixer.music.get_busy() is False:
-                pygame.mixer.music.play(-1, 0.0)
-            event = pygame.event.wait()
-            if event.type == pygame.QUIT:
-                exit(0)
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    exit(0)
 
     def process_pygame_events(self):
         for event in pygame.event.get():

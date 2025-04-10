@@ -7,7 +7,7 @@ import os
 
 class Agent:
     def __init__(self, action_size=4, learning_rate=0.5, discount_factor=0.95,
-                 exploration_rate=1.0, exploration_decay=0.95,
+                 exploration_rate=1.0, exploration_decay=0.999,
                  min_exploration_rate=0.1):
         self.reward = 0
         self.action_size = action_size
@@ -52,6 +52,7 @@ class Agent:
         return self.q_table[state_key][action]
 
     def update_q_value(self, state, action, reward, next_state):
+        next_state_tuple = None
         if isinstance(state, np.ndarray):
             state_tuple = tuple(map(tuple, state))
         else:

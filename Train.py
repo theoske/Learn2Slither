@@ -101,7 +101,6 @@ class Train:
         self.listener.stop()
         self.t1.join()
         self.agent.save_q_table(self.qtable_filename)
-        return self.agent, rewards_per_episode
 
     def train_ui(self):
         """

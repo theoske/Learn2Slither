@@ -4,19 +4,6 @@ from Agent import Agent
 import os.path
 from Train import Train
 
-"""
-    step-by-step avec entrer par défaut en fonction de la commande.
-    Appuyer sur espace pour changer (->human readable -> computer speed).
-
-    Entrainement de nouveau model sans ui.
-    Entrainement de nouveau model avec ui.
-    Entrainement de model deja existant sans ui.
-    Entrainement de model deja existant avec ui.
-
-    Démonstration model sans ui.
-    Démonstration model avec ui.
-"""
-
 
 def main():
     parser = argparse.ArgumentParser(description="Learn2Slither")
@@ -31,11 +18,12 @@ def main():
                         readable or computer speed")
 
     args = parser.parse_args()
-
+    if not (args.modelname and args.sessions and args.mode and args.ui and args.rate):
+        print_error()
     rate_map = {"step": 0, "human": 1, "cpu": 2}
     rate = rate_map.get(args.rate, 0)
     if os.path.isfile(args.modelname):
-        if args.mode == "train":
+        if args.mode == "train" and args.sessions:
             agent = Agent()
             agent.load_q_table(args.modelname)
             if args.sessions > 0:
@@ -48,16 +36,29 @@ def main():
                               qtable_filename=args.modelname,
                               agent=agent, rate=rate, is_ui_on=False)
                 t.train()
+        elif args.mode == "play" and args.sessions and args.sessions > 0:
+            len_list = []
+            duration_list = []
+            for i in range(args.sessions):
+                g = Play(rate=2, is_ui_on=False, multi_sess=True)
+                max_len, duration = g.display_gameplay_term(args.modelname)
+                len_list.append(max_len)
+                duration_list.append(duration)
+                print(i)
+            avg_len = sum(len_list) / len(len_list)
+            avg_duration = sum(duration_list) / len(duration_list)
+            len_list.sort()
+            print(f"Average length: {avg_len}   Average duration {avg_duration}\
+                     Max length: {max(len_list)}   Median: {len_list[args.sessions//2]}")
         elif args.mode == "play":
             if args.ui == "on":
                 g = Play(rate=rate, is_ui_on=True)
-                g.display_gameplay_ui(args.modelname)
             else:
                 g = Play(rate=rate, is_ui_on=False)
-                g.display_gameplay_term(args.modelname)
+            g.display_gameplay_ui(args.modelname)
         else:
             print_error()
-    elif os.path.isfile(args.modelname) is False:
+    elif os.path.isfile(args.modelname) is False and args.sessions:
         if args.mode == "train":
             agent = Agent()
             if args.rate is None:
