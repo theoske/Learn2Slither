@@ -133,7 +133,8 @@ class Play:
                 self.print_action(action)
             agent.perform_action(action)
             agent.get_agent_board().is_eating_apple()
-            if agent.get_agent_board().death or self.duration > 2500 or (self.duration > 500 and self.max_len < 6):
+            if agent.get_agent_board().death or self.duration > 2500 or \
+                    (self.duration > 500 and self.max_len < 6):
                 if not self.multi_sess:
                     print(f"Max length of snake: {self.max_len}, \
                         Duration: {self.duration}")

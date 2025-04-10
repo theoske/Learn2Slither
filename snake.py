@@ -18,7 +18,8 @@ def main():
                         readable or computer speed")
 
     args = parser.parse_args()
-    if not (args.modelname and args.sessions and args.mode and args.ui and args.rate):
+    if not (args.modelname and args.sessions and args.mode
+            and args.ui and args.rate):
         print_error()
     rate_map = {"step": 0, "human": 1, "cpu": 2}
     rate = rate_map.get(args.rate, 0)
@@ -48,8 +49,10 @@ def main():
             avg_len = sum(len_list) / len(len_list)
             avg_duration = sum(duration_list) / len(duration_list)
             len_list.sort()
-            print(f"Average length: {avg_len}   Average duration {avg_duration}\
-                     Max length: {max(len_list)}   Median: {len_list[args.sessions//2]}")
+            print(f"Average length: {avg_len} \
+                  Average duration {avg_duration}\
+                     Max length: {max(len_list)}  \
+                        Median: {len_list[args.sessions//2]}")
         elif args.mode == "play":
             if args.ui == "on":
                 g = Play(rate=rate, is_ui_on=True)
